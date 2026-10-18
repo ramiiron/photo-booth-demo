@@ -83,7 +83,7 @@
     <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
   </div>
 
-  <div id="cuenta">3</div>
+  <div id="cuenta">5</div>
   <div id="flash"></div>
 
   <div id="vista-qr" class="centro oculto">
@@ -140,19 +140,22 @@ function capturar(){
   return c.toDataURL("image/jpeg", 0.85);
 }
 
-$("obturador").onclick = async () => {
-  $("obturador").style.display = "none";
+async function cuentaRegresiva(segundos){
   const cuenta = $("cuenta");
   cuenta.style.display = "flex";
-  for (let n = 3; n >= 1; n--){ cuenta.textContent = n; await esperar(1000); }
+  for (let n = segundos; n >= 1; n--){ cuenta.textContent = n; await esperar(1000); }
   cuenta.style.display = "none";
+}
+
+$("obturador").onclick = async () => {
+  $("obturador").style.display = "none";
 
   const fotos = [];
   for (let i = 1; i <= 3; i++){
-    $("leyenda").textContent = `Fotografía ${i} de 3`;
+    $("leyenda").textContent = `Fotografía ${i} de 3 — prepárate`;
+    await cuentaRegresiva(5);
     fotos.push(capturar());
     pintarPuntos(i);
-    if (i < 3) await esperar(5000);
   }
   $("leyenda").textContent = "Revelando…";
 
