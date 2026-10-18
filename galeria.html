@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mis fotos - Photo Booth</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,Helvetica,Arial,sans-serif; background:#111; color:#fff;
+         text-align:center; padding:28px 18px 60px; }
+  h1 { font-size:32px; margin-bottom:8px; }
+  .sub { color:#aaa; margin-bottom:24px; font-size:16px; line-height:1.5; }
+  .foto { margin-bottom:28px; }
+  .foto img { width:100%; max-width:480px; border-radius:14px; display:block; margin:0 auto 12px; }
+  .foto a { display:inline-block; background:#ff2d55; color:#fff; text-decoration:none;
+            font-weight:bold; padding:14px 34px; border-radius:999px; font-size:18px; }
+</style>
+</head>
+<body>
+<h1>📸 Tus fotos</h1>
+<div class="sub" id="sub">Toca "Descargar" en cada foto para guardarla.</div>
+<div id="gal"></div>
+<script>
+const s = new URLSearchParams(location.search).get("s");
+let fotos = [];
+try { fotos = JSON.parse(localStorage.getItem("booth-" + s) || "[]"); } catch(e){}
+const gal = document.getElementById("gal");
+if (!fotos.length){
+  document.getElementById("sub").innerHTML =
+    "Demo: las fotos solo existen en el teléfono que las tomó.<br>" +
+    "En la versión del Pi, esta galería es un link público<br>que cada invitado abre en su propio teléfono.";
+} else {
+  gal.innerHTML = fotos.map((f,i) =>
+    `<div class="foto"><img src="${f}" alt="Foto ${i+1}"><br>` +
+    `<a href="${f}" download="photo-booth-${i+1}.jpg">Descargar foto ${i+1}</a></div>`
+  ).join("");
+}
+</script>
+</body>
+</html>

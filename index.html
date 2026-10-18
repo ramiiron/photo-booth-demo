@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#111111">
+<title>Photo Booth (demo)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; overflow:hidden; }
+  body { font-family:-apple-system,Helvetica,Arial,sans-serif; background:#000; color:#fff;
+         text-align:center; }
+  #pantalla { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+  #preview { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
+             transform:scaleX(-1); }
+  .velo { position:fixed; inset:0; background:rgba(0,0,0,.25); }
+  .centro { position:relative; z-index:2; padding:24px; width:100%; max-height:100%; overflow-y:auto; }
+  h1 { font-size:44px; margin-bottom:16px; text-shadow:0 2px 12px #000; }
+  .sub { font-size:22px; color:#eee; margin-bottom:28px; text-shadow:0 2px 8px #000; }
+  .nota { font-size:15px; color:#aaa; margin-top:20px; line-height:1.6; }
+  button.grande { font-size:32px; padding:26px 52px; border:none; border-radius:999px;
+           background:#ff2d55; color:#fff; font-weight:bold; cursor:pointer;
+           box-shadow:0 6px 30px rgba(255,45,85,.5); }
+  button.grande:active { transform:scale(.95); }
+  #obturador { position:fixed; bottom:36px; left:50%; transform:translateX(-50%); z-index:3;
+           width:110px; height:110px; border-radius:50%; border:6px solid #fff;
+           background:#ff2d55; cursor:pointer; }
+  #obturador:active { transform:translateX(-50%) scale(.92); }
+  #cuenta { position:fixed; inset:0; z-index:4; display:none; align-items:center;
+            justify-content:center; font-size:200px; font-weight:bold;
+            text-shadow:0 4px 30px #000; }
+  #msg { position:fixed; top:28px; left:0; right:0; z-index:3; font-size:26px;
+         text-shadow:0 2px 8px #000; }
+  .puntos { position:fixed; bottom:170px; left:0; right:0; z-index:3; }
+  .puntos span { display:inline-block; width:24px; height:24px; border-radius:50%;
+                 background:rgba(255,255,255,.35); margin:0 8px; }
+  .puntos span.ok { background:#30d158; }
+  #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none;
+           z-index:5; transition:opacity .45s; }
+  #qrbox { display:inline-block; background:#fff; padding:14px; border-radius:12px; margin:14px auto; }
+  #otra { margin-top:24px; font-size:22px; padding:16px 34px; border-radius:16px;
+          border:2px solid #888; background:rgba(255,255,255,.12); color:#fff; cursor:pointer; }
+  .oculto { display:none !important; }
+</style>
+</head>
+<body>
+<div id="pantalla">
+  <div id="vista-inicio" class="centro">
+    <h1>📸 Photo Booth</h1>
+    <div class="sub">Toca para activar la cámara</div>
+    <button id="boton-activar" class="grande">Activar cámara</button>
+    <div class="nota">Demo publicada en GitHub Pages.<br>La cámara funciona de verdad en este teléfono.</div>
+  </div>
+
+  <div id="vista-camara" class="oculto">
+    <video id="preview" playsinline muted autoplay></video>
+    <div class="velo"></div>
+    <div id="msg">¡Sonríe! 😄</div>
+    <button id="obturador" aria-label="Sacar fotos"></button>
+    <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
+  </div>
+
+  <div id="cuenta">3</div>
+  <div id="flash"></div>
+
+  <div id="vista-qr" class="centro oculto">
+    <h1>¡Listo! 🎉</h1>
+    <div id="qrbox"><div id="qr"></div></div>
+    <div class="sub">Escanea el código para descargar tus fotos</div>
+    <div class="nota">Demo: el QR abre la galería en este mismo teléfono.<br>
+      En la versión del Pi, el QR es un link público<br>que funciona en el teléfono de cada invitado.</div>
+    <button id="otra">Nueva sesión</button>
+  </div>
+</div>
+
+<script src="./qrcode.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const video = $("preview");
+const BASE = location.href.replace(/\/[^/]*$/, "");
+
+function mostrar(id){
+  ["vista-inicio","vista-camara","vista-qr"].forEach(x => $(x).classList.toggle("oculto", x !== id));
+}
+function pintarPuntos(n){
+  [...$("puntos").children].forEach((s,i) => s.classList.toggle("ok", i < n));
+}
+
+$("boton-activar").onclick = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
+      audio: false
+    });
+    video.srcObject = stream;
+    await video.play();
+    mostrar("vista-camara");
+  } catch (e) {
+    alert("No se pudo activar la cámara. Revisa el permiso en Ajustes.");
+  }
+};
+
+function capturar(){
+  const c = document.createElement("canvas");
+  const s = Math.min(1, 960 / video.videoWidth);
+  c.width = Math.round(video.videoWidth * s);
+  c.height = Math.round(video.videoHeight * s);
+  const ctx = c.getContext("2d");
+  ctx.translate(c.width, 0); ctx.scale(-1, 1); // espejo, como se veía
+  ctx.drawImage(video, 0, 0, c.width, c.height);
+  const f = $("flash");
+  f.style.transition = "none"; f.style.opacity = "0.9";
+  requestAnimationFrame(() => { f.style.transition = "opacity .45s"; f.style.opacity = "0"; });
+  return c.toDataURL("image/jpeg", 0.85);
+}
+
+$("obturador").onclick = async () => {
+  $("obturador").style.display = "none";
+  const cuenta = $("cuenta");
+  cuenta.style.display = "flex";
+  for (let n = 3; n >= 1; n--){ cuenta.textContent = n; await esperar(1000); }
+  cuenta.style.display = "none";
+
+  const fotos = [];
+  for (let i = 1; i <= 3; i++){
+    $("msg").textContent = `Foto ${i} de 3... ¡quieto!`;
+    fotos.push(capturar());
+    pintarPuntos(i);
+    if (i < 3) await esperar(5000);
+  }
+  $("msg").textContent = "Generando QR...";
+
+  const sesion = Math.random().toString(36).slice(2, 10);
+  try { localStorage.setItem("booth-" + sesion, JSON.stringify(fotos)); } catch(e){}
+  const url = BASE + "/galeria.html?s=" + sesion;
+  $("qr").innerHTML = "";
+  new QRCode($("qr"), { text: url, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M });
+
+  pintarPuntos(0);
+  $("obturador").style.display = "";
+  $("msg").textContent = "¡Sonríe! 😄";
+  mostrar("vista-qr");
+};
+
+$("otra").onclick = () => mostrar("vista-camara");
+</script>
+</body>
+</html>
