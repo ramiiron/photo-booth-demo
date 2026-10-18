@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#04050c">
+<title>Photo Booth</title>
+<style>
+  :root{
+    --navy:#04050c;
+    --ice:#eef8ff;
+    --cyan:#4de3ff;
+    --pink:#ff2fb3;
+    --blue:#3b82f6;
+    --teal:#00e5a0;
+    --violet:#8b5cf6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; overflow:hidden; }
+  body { background:var(--navy); color:var(--ice); text-align:center;
+         font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;
+         -webkit-font-smoothing:antialiased; }
+
+  /* ===== Fondo neón: franjas en zigzag ===== */
+  .fondo-neon { position:fixed; inset:-12%; width:124%; height:124%;
+                z-index:0; pointer-events:none; }
+  .fondo-neon .capas { animation:deriva 16s ease-in-out infinite; }
+  @keyframes deriva { 0%,100%{transform:translateY(-2.5%)} 50%{transform:translateY(2.5%)} }
+  .velo { position:fixed; inset:0; z-index:1; pointer-events:none;
+          background:radial-gradient(ellipse at 50% 42%, transparent 25%, rgba(2,3,8,.72) 100%); }
+
+  /* ===== Texto tubo de neón ===== */
+  .neon { font-weight:700; text-transform:uppercase; color:#f4fbff;
+          -webkit-text-stroke:1.5px rgba(238,248,255,.92);
+          text-shadow:0 0 6px rgba(125,211,252,.95),
+                      0 0 22px rgba(56,189,248,.85),
+                      0 0 60px rgba(14,165,233,.6),
+                      0 0 120px rgba(37,99,235,.45); }
+  .neon-rosa { font-weight:700; text-transform:uppercase; color:#fff5fb;
+          -webkit-text-stroke:1.5px rgba(255,240,250,.92);
+          text-shadow:0 0 6px rgba(255,120,200,.95),
+                      0 0 22px rgba(255,47,179,.85),
+                      0 0 60px rgba(255,47,179,.6),
+                      0 0 120px rgba(139,92,246,.45); }
+
+  #pantalla { position:fixed; inset:0; z-index:2; display:flex;
+              align-items:center; justify-content:center; }
+
+  /* ===== Inicio: toda la pantalla es el botón ===== */
+  #vista-inicio { cursor:pointer; padding:24px; }
+  .inicio-l1 { font-size:clamp(44px,11vw,84px); letter-spacing:.08em; line-height:1.05; }
+  .inicio-l2 { font-size:clamp(64px,16vw,124px); letter-spacing:.05em; line-height:1.02; margin-top:6px; }
+
+  /* ===== Cámara ===== */
+  #preview { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
+             transform:scaleX(-1); z-index:2; }
+  .degradado { position:fixed; inset:0; z-index:3; pointer-events:none;
+               background:linear-gradient(to top, rgba(2,3,8,.6), transparent 30%),
+                           linear-gradient(to bottom, rgba(2,3,8,.45), transparent 26%); }
+  #leyenda { position:fixed; top:36px; left:0; right:0; z-index:4;
+             font-size:clamp(22px,5.5vw,34px); letter-spacing:.14em; }
+  #obturador { position:fixed; bottom:46px; left:50%; transform:translateX(-50%); z-index:4;
+               width:94px; height:94px; border-radius:50%; cursor:pointer;
+               border:3px solid rgba(238,248,255,.95); background:rgba(4,5,12,.25);
+               box-shadow:0 0 14px rgba(77,227,255,.8),
+                          0 0 44px rgba(77,227,255,.4),
+                          inset 0 0 18px rgba(77,227,255,.35); }
+  #obturador::after { content:""; position:absolute; inset:12px; border-radius:50%;
+                      border:2px solid rgba(77,227,255,.7);
+                      box-shadow:0 0 10px rgba(77,227,255,.6); }
+  #obturador:active { transform:translateX(-50%) scale(.92); }
+  .puntos { position:fixed; bottom:162px; left:0; right:0; z-index:4; }
+  .puntos span { display:inline-block; width:8px; height:8px; border-radius:50%;
+                 background:rgba(238,248,255,.25); margin:0 8px; transition:all .3s; }
+  .puntos span.ok { background:var(--cyan);
+                    box-shadow:0 0 10px var(--cyan), 0 0 26px rgba(77,227,255,.7); }
+
+  /* ===== Cuenta regresiva ===== */
+  #cuenta { position:fixed; inset:0; z-index:5; display:none; align-items:center;
+            justify-content:center; font-size:clamp(140px,38vw,220px); }
+  #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none;
+           z-index:6; transition:opacity .45s; }
+
+  /* ===== QR ===== */
+  .centro { position:relative; z-index:2; padding:24px; width:100%;
+            max-height:100%; overflow-y:auto; }
+  .qr-titulo { font-size:clamp(34px,8.5vw,58px); letter-spacing:.06em; line-height:1.1;
+               margin-bottom:26px; }
+  #qrbox { display:inline-block; background:#fff; padding:14px; border-radius:16px;
+           margin:0 auto 26px;
+           box-shadow:0 0 18px rgba(77,227,255,.75), 0 0 60px rgba(255,47,179,.35); }
+  #qrbox img, #qrbox canvas, #qrbox table { display:block; }
+  .sub-neon { font-size:15px; letter-spacing:.28em; text-transform:uppercase;
+              color:#bfe9ff; text-shadow:0 0 12px rgba(77,227,255,.7); margin-bottom:34px; }
+  .btn-neon { font-family:inherit; font-weight:700; font-size:14px; letter-spacing:.3em;
+              text-transform:uppercase; color:var(--ice); cursor:pointer;
+              padding:18px 46px 18px calc(46px + .3em); border-radius:999px;
+              border:2px solid rgba(77,227,255,.9); background:rgba(77,227,255,.07);
+              box-shadow:0 0 14px rgba(77,227,255,.55),
+                         inset 0 0 14px rgba(77,227,255,.22);
+              text-shadow:0 0 10px rgba(125,211,252,.9); }
+  .btn-neon:active { background:rgba(77,227,255,.22); }
+  .oculto { display:none !important; }
+</style>
+</head>
+<body>
+
+<svg class="fondo-neon" viewBox="0 0 100 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <filter id="brillo" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="0.9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="brillo-suave" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="4.5"/>
+    </filter>
+  </defs>
+  <g class="capas">
+    <g filter="url(#brillo-suave)" opacity="0.5" stroke-width="5" fill="none">
+      <path d="M-15 192 L50 167 L115 192" stroke="#ff2fb3"/>
+      <path d="M-15 167 L50 142 L115 167" stroke="#3b82f6"/>
+      <path d="M-15 142 L50 117 L115 142" stroke="#00e5a0"/>
+      <path d="M-15 117 L50 92 L115 117" stroke="#8b5cf6"/>
+      <path d="M-15 92 L50 67 L115 92" stroke="#ff2fb3"/>
+      <path d="M-15 67 L50 42 L115 67" stroke="#3b82f6"/>
+      <path d="M-15 42 L50 17 L115 42" stroke="#00e5a0"/>
+      <path d="M-15 17 L50 -8 L115 17" stroke="#8b5cf6"/>
+      <path d="M-25 70 L115 -5" stroke="#4de3ff" opacity="0.6"/>
+      <path d="M-25 130 L115 55" stroke="#ff2fb3" opacity="0.5"/>
+    </g>
+    <g filter="url(#brillo)" stroke-width="1.1" fill="none" opacity="0.95">
+      <path d="M-15 192 L50 167 L115 192" stroke="#ff9ed6"/>
+      <path d="M-15 167 L50 142 L115 167" stroke="#9dc0ff"/>
+      <path d="M-15 142 L50 117 L115 142" stroke="#9df5d4"/>
+      <path d="M-15 117 L50 92 L115 117" stroke="#c4b0ff"/>
+      <path d="M-15 92 L50 67 L115 92" stroke="#ff9ed6"/>
+      <path d="M-15 67 L50 42 L115 67" stroke="#9dc0ff"/>
+      <path d="M-15 42 L50 17 L115 42" stroke="#9df5d4"/>
+      <path d="M-15 17 L50 -8 L115 17" stroke="#c4b0ff"/>
+      <path d="M-25 70 L115 -5" stroke="#bff3ff" opacity="0.7"/>
+      <path d="M-25 130 L115 55" stroke="#ffc4e8" opacity="0.6"/>
+    </g>
+  </g>
+</svg>
+<div class="velo"></div>
+
+<div id="pantalla">
+  <div id="vista-inicio" role="button" aria-label="Toca para comenzar">
+    <div class="neon inicio-l1">Toca para</div>
+    <div class="neon-rosa inicio-l2">Comenzar</div>
+  </div>
+
+  <div id="vista-camara" class="oculto">
+    <video id="preview" playsinline muted autoplay></video>
+    <div class="degradado"></div>
+    <div id="leyenda" class="neon">Sonríe</div>
+    <button id="obturador" aria-label="Sacar fotos"></button>
+    <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
+  </div>
+
+  <div id="cuenta" class="neon">5</div>
+  <div id="flash"></div>
+
+  <div id="vista-qr" class="centro oculto">
+    <div class="neon qr-titulo">Gracias<br>por posar</div>
+    <div id="qrbox"><div id="qr"></div></div>
+    <div class="sub-neon">Escanea el código<br>para llevarte tus fotos</div>
+    <button id="otra" class="btn-neon">Nueva sesión</button>
+  </div>
+</div>
+
+<script src="./qrcode.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const video = $("preview");
+const BASE = location.href.replace(/\/[^/]*$/, "");
+
+function mostrar(id){
+  ["vista-inicio","vista-camara","vista-qr"].forEach(x => $(x).classList.toggle("oculto", x !== id));
+}
+function pintarPuntos(n){
+  [...$("puntos").children].forEach((s,i) => s.classList.toggle("ok", i < n));
+}
+
+$("vista-inicio").onclick = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
+      audio: false
+    });
+    video.srcObject = stream;
+    await video.play();
+    mostrar("vista-camara");
+  } catch (e) {
+    alert("No se pudo activar la cámara. Revisa el permiso en Ajustes.");
+  }
+};
+
+function capturar(){
+  const c = document.createElement("canvas");
+  const s = Math.min(1, 960 / video.videoWidth);
+  c.width = Math.round(video.videoWidth * s);
+  c.height = Math.round(video.videoHeight * s);
+  const ctx = c.getContext("2d");
+  ctx.translate(c.width, 0); ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0, c.width, c.height);
+  const f = $("flash");
+  f.style.transition = "none"; f.style.opacity = "0.9";
+  requestAnimationFrame(() => { f.style.transition = "opacity .45s"; f.style.opacity = "0"; });
+  return c.toDataURL("image/jpeg", 0.85);
+}
+
+async function cuentaRegresiva(segundos){
+  const cuenta = $("cuenta");
+  cuenta.style.display = "flex";
+  for (let n = segundos; n >= 1; n--){ cuenta.textContent = n; await esperar(1000); }
+  cuenta.style.display = "none";
+}
+
+$("obturador").onclick = async () => {
+  $("obturador").style.display = "none";
+
+  const fotos = [];
+  for (let i = 1; i <= 3; i++){
+    $("leyenda").textContent = `Foto ${i} de 3 — prepárate`;
+    await cuentaRegresiva(5);
+    fotos.push(capturar());
+    pintarPuntos(i);
+  }
+  $("leyenda").textContent = "Revelando…";
+
+  const sesion = Math.random().toString(36).slice(2, 10);
+  try { localStorage.setItem("booth-" + sesion, JSON.stringify(fotos)); } catch(e){}
+  const url = BASE + "/galeria.html?s=" + sesion;
+  $("qr").innerHTML = "";
+  new QRCode($("qr"), { text: url, width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
+
+  pintarPuntos(0);
+  $("leyenda").textContent = "Sonríe";
+  $("obturador").style.display = "";
+  mostrar("vista-qr");
+};
+
+$("otra").onclick = () => mostrar("vista-camara");
+</script>
+<script>
+window.addEventListener('load', () => {
+  mostrar('vista-qr');
+  new QRCode(document.getElementById('qr'), { text:'https://ejemplo.com/fotos/abc123', width:248, height:248, correctLevel: QRCode.CorrectLevel.M });
+});
+</script>
+</body>
+</html>

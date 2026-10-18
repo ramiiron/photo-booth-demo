@@ -3,42 +3,93 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#0b0b0d">
+<meta name="theme-color" content="#04050c">
 <title>Tus fotografías — Photo Booth</title>
 <style>
   :root{
-    --bg:#0b0b0d; --ivory:#f5f1e8; --muted:#8e8e93; --gold:#c8a15a;
-    --serif:Didot,'Bodoni MT','Playfair Display',Georgia,serif;
-    --sans:-apple-system,'Helvetica Neue',Arial,sans-serif;
+    --navy:#04050c; --ice:#eef8ff; --cyan:#4de3ff; --pink:#ff2fb3;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:var(--sans); background:var(--bg); color:var(--ivory);
-         text-align:center; padding:56px 20px 80px; -webkit-font-smoothing:antialiased; }
-  .eyebrow { font-size:11px; letter-spacing:.42em; text-transform:uppercase;
-             color:var(--muted); margin-bottom:18px; padding-left:.42em; }
-  h1 { font-family:var(--serif); font-weight:400; font-size:38px; margin-bottom:14px; }
-  .regla { width:56px; height:1px; background:var(--gold); margin:0 auto 20px; }
-  .sub { color:var(--muted); margin-bottom:44px; font-size:15px; font-weight:300;
-         letter-spacing:.05em; line-height:1.7; }
-  .foto { margin-bottom:48px; }
-  .foto img { width:100%; max-width:460px; border-radius:18px; display:block;
-              margin:0 auto 20px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
-  .foto a { display:inline-block; color:var(--ivory); text-decoration:none;
-            font-size:12px; letter-spacing:.3em; text-transform:uppercase;
-            padding:16px 40px 16px calc(40px + .3em); border:1px solid var(--gold);
-            border-radius:999px; }
-  .foto a:active { background:rgba(200,161,90,.14); }
-  footer { margin-top:20px; font-size:11px; letter-spacing:.3em; text-transform:uppercase;
-           color:var(--muted); }
+  body { background:var(--navy); color:var(--ice); text-align:center;
+         font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;
+         padding:60px 20px 90px; -webkit-font-smoothing:antialiased; }
+  .fondo-neon { position:fixed; inset:-12%; width:124%; height:124%;
+                z-index:0; pointer-events:none; }
+  .fondo-neon .capas { animation:deriva 16s ease-in-out infinite; }
+  @keyframes deriva { 0%,100%{transform:translateY(-2.5%)} 50%{transform:translateY(2.5%)} }
+  .velo { position:fixed; inset:0; z-index:1; pointer-events:none;
+          background:radial-gradient(ellipse at 50% 30%, transparent 20%, rgba(2,3,8,.78) 100%); }
+  .contenido { position:relative; z-index:2; }
+  .neon { font-weight:700; text-transform:uppercase; color:#f4fbff;
+          -webkit-text-stroke:1.5px rgba(238,248,255,.92);
+          text-shadow:0 0 6px rgba(125,211,252,.95),
+                      0 0 22px rgba(56,189,248,.85),
+                      0 0 60px rgba(14,165,233,.6),
+                      0 0 120px rgba(37,99,235,.45); }
+  h1 { font-size:clamp(36px,9vw,58px); letter-spacing:.06em; line-height:1.1; margin-bottom:16px; }
+  .sub-neon { font-size:14px; letter-spacing:.3em; text-transform:uppercase; color:#bfe9ff;
+              text-shadow:0 0 12px rgba(77,227,255,.7); margin-bottom:52px; line-height:2; }
+  .foto { margin-bottom:56px; }
+  .foto img { width:100%; max-width:460px; border-radius:16px; display:block;
+              margin:0 auto 22px;
+              box-shadow:0 0 16px rgba(77,227,255,.35), 0 24px 60px rgba(0,0,0,.6); }
+  .btn-neon { display:inline-block; text-decoration:none; font-weight:700; font-size:13px;
+              letter-spacing:.3em; text-transform:uppercase; color:var(--ice);
+              padding:16px 42px 16px calc(42px + .3em); border-radius:999px;
+              border:2px solid rgba(77,227,255,.9); background:rgba(77,227,255,.07);
+              box-shadow:0 0 14px rgba(77,227,255,.55),
+                         inset 0 0 14px rgba(77,227,255,.22);
+              text-shadow:0 0 10px rgba(125,211,252,.9); }
+  .btn-neon:active { background:rgba(77,227,255,.22); }
+  footer { margin-top:24px; font-size:12px; letter-spacing:.34em; text-transform:uppercase;
+           color:#9fd8f5; text-shadow:0 0 10px rgba(77,227,255,.6); }
 </style>
 </head>
 <body>
-  <div class="eyebrow">Photo Booth</div>
-  <h1>Tus fotografías</h1>
-  <div class="regla"></div>
-  <div class="sub" id="sub">Guárdalas antes de cerrar esta página</div>
+<svg class="fondo-neon" viewBox="0 0 100 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <filter id="brillo" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="0.9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="brillo-suave" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="4.5"/>
+    </filter>
+  </defs>
+  <g class="capas">
+    <g filter="url(#brillo-suave)" opacity="0.5" stroke-width="5" fill="none">
+      <path d="M-15 192 L50 167 L115 192" stroke="#ff2fb3"/>
+      <path d="M-15 167 L50 142 L115 167" stroke="#3b82f6"/>
+      <path d="M-15 142 L50 117 L115 142" stroke="#00e5a0"/>
+      <path d="M-15 117 L50 92 L115 117" stroke="#8b5cf6"/>
+      <path d="M-15 92 L50 67 L115 92" stroke="#ff2fb3"/>
+      <path d="M-15 67 L50 42 L115 67" stroke="#3b82f6"/>
+      <path d="M-15 42 L50 17 L115 42" stroke="#00e5a0"/>
+      <path d="M-15 17 L50 -8 L115 17" stroke="#8b5cf6"/>
+      <path d="M-25 70 L115 -5" stroke="#4de3ff" opacity="0.6"/>
+      <path d="M-25 130 L115 55" stroke="#ff2fb3" opacity="0.5"/>
+    </g>
+    <g filter="url(#brillo)" stroke-width="1.1" fill="none" opacity="0.95">
+      <path d="M-15 192 L50 167 L115 192" stroke="#ff9ed6"/>
+      <path d="M-15 167 L50 142 L115 167" stroke="#9dc0ff"/>
+      <path d="M-15 142 L50 117 L115 142" stroke="#9df5d4"/>
+      <path d="M-15 117 L50 92 L115 117" stroke="#c4b0ff"/>
+      <path d="M-15 92 L50 67 L115 92" stroke="#ff9ed6"/>
+      <path d="M-15 67 L50 42 L115 67" stroke="#9dc0ff"/>
+      <path d="M-15 42 L50 17 L115 42" stroke="#9df5d4"/>
+      <path d="M-15 17 L50 -8 L115 17" stroke="#c4b0ff"/>
+      <path d="M-25 70 L115 -5" stroke="#bff3ff" opacity="0.7"/>
+      <path d="M-25 130 L115 55" stroke="#ffc4e8" opacity="0.6"/>
+    </g>
+  </g>
+</svg>
+<div class="velo"></div>
+<div class="contenido">
+  <h1 class="neon">Tus<br>fotografías</h1>
+  <div class="sub-neon" id="sub">Guárdalas antes de<br>cerrar esta página</div>
   <div id="gal"></div>
   <footer>Gracias por venir</footer>
+</div>
 <script>
 const s = new URLSearchParams(location.search).get("s");
 let fotos = [];
@@ -46,13 +97,13 @@ try { fotos = JSON.parse(localStorage.getItem("booth-" + s) || "[]"); } catch(e)
 const gal = document.getElementById("gal");
 if (!fotos.length){
   document.getElementById("sub").innerHTML =
-    "Demo: las fotos solo existen en el teléfono que las tomó.<br>" +
+    "Demo: las fotos solo existen en el teléfono que las tomó.<br><br>" +
     "En la versión del evento, esta galería es un link público<br>" +
     "que cada invitado abre en su propio teléfono.";
 } else {
   gal.innerHTML = fotos.map((f,i) =>
     `<div class="foto"><img src="${f}" alt="Fotografía ${i+1}"><br>` +
-    `<a href="${f}" download="photo-booth-${i+1}.jpg">Descargar</a></div>`
+    `<a class="btn-neon" href="${f}" download="photo-booth-${i+1}.jpg">Descargar</a></div>`
   ).join("");
 }
 </script>
