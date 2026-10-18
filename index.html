@@ -24,11 +24,13 @@
          font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;
          -webkit-font-smoothing:antialiased; }
 
-  /* ===== Fondo neón: franjas en zigzag ===== */
-  .fondo-neon { position:fixed; inset:-12%; width:124%; height:124%;
+  /* ===== Fondo neón: franjas en zigzag (estático: se pinta una sola vez) ===== */
+  .fondo-neon { position:fixed; inset:0; width:100%; height:100%;
                 z-index:0; pointer-events:none; }
-  .fondo-neon .capas { animation:deriva 16s ease-in-out infinite; }
-  @keyframes deriva { 0%,100%{transform:translateY(-2.5%)} 50%{transform:translateY(2.5%)} }
+  .luz-ambiente { position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .luz-ambiente.a { background:radial-gradient(60% 45% at 18% 12%, rgba(255,47,179,.20), transparent 70%); }
+  .luz-ambiente.b { background:radial-gradient(65% 50% at 85% 88%, rgba(59,130,246,.20), transparent 70%); }
+  .luz-ambiente.c { background:radial-gradient(50% 40% at 80% 15%, rgba(0,229,160,.12), transparent 70%); }
   .velo { position:fixed; inset:0; z-index:1; pointer-events:none;
           background:radial-gradient(ellipse at 50% 42%, transparent 25%, rgba(2,3,8,.72) 100%); }
 
@@ -36,15 +38,13 @@
   .neon { font-weight:700; text-transform:uppercase; color:#f4fbff;
           -webkit-text-stroke:1.5px rgba(238,248,255,.92);
           text-shadow:0 0 6px rgba(125,211,252,.95),
-                      0 0 22px rgba(56,189,248,.85),
-                      0 0 60px rgba(14,165,233,.6),
-                      0 0 120px rgba(37,99,235,.45); }
+                      0 0 22px rgba(56,189,248,.8),
+                      0 0 64px rgba(14,165,233,.55); }
   .neon-rosa { font-weight:700; text-transform:uppercase; color:#fff5fb;
           -webkit-text-stroke:1.5px rgba(255,240,250,.92);
           text-shadow:0 0 6px rgba(255,120,200,.95),
-                      0 0 22px rgba(255,47,179,.85),
-                      0 0 60px rgba(255,47,179,.6),
-                      0 0 120px rgba(139,92,246,.45); }
+                      0 0 22px rgba(255,47,179,.8),
+                      0 0 64px rgba(255,47,179,.55); }
 
   #pantalla { position:fixed; inset:0; z-index:2; display:flex;
               align-items:center; justify-content:center; }
@@ -110,41 +110,49 @@
 
 <svg class="fondo-neon" viewBox="0 0 100 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <defs>
-    <filter id="brillo" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="0.9" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="brillo-suave" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="4.5"/>
-    </filter>
+    <path id="ch" d="M-15 26 L50 0 L115 26" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path id="hz" d="M-30 0 L120 -72" fill="none" stroke-linecap="round"/>
   </defs>
-  <g class="capas">
-    <g filter="url(#brillo-suave)" opacity="0.5" stroke-width="5" fill="none">
-      <path d="M-15 192 L50 167 L115 192" stroke="#ff2fb3"/>
-      <path d="M-15 167 L50 142 L115 167" stroke="#3b82f6"/>
-      <path d="M-15 142 L50 117 L115 142" stroke="#00e5a0"/>
-      <path d="M-15 117 L50 92 L115 117" stroke="#8b5cf6"/>
-      <path d="M-15 92 L50 67 L115 92" stroke="#ff2fb3"/>
-      <path d="M-15 67 L50 42 L115 67" stroke="#3b82f6"/>
-      <path d="M-15 42 L50 17 L115 42" stroke="#00e5a0"/>
-      <path d="M-15 17 L50 -8 L115 17" stroke="#8b5cf6"/>
-      <path d="M-25 70 L115 -5" stroke="#4de3ff" opacity="0.6"/>
-      <path d="M-25 130 L115 55" stroke="#ff2fb3" opacity="0.5"/>
-    </g>
-    <g filter="url(#brillo)" stroke-width="1.1" fill="none" opacity="0.95">
-      <path d="M-15 192 L50 167 L115 192" stroke="#ff9ed6"/>
-      <path d="M-15 167 L50 142 L115 167" stroke="#9dc0ff"/>
-      <path d="M-15 142 L50 117 L115 142" stroke="#9df5d4"/>
-      <path d="M-15 117 L50 92 L115 117" stroke="#c4b0ff"/>
-      <path d="M-15 92 L50 67 L115 92" stroke="#ff9ed6"/>
-      <path d="M-15 67 L50 42 L115 67" stroke="#9dc0ff"/>
-      <path d="M-15 42 L50 17 L115 42" stroke="#9df5d4"/>
-      <path d="M-15 17 L50 -8 L115 17" stroke="#c4b0ff"/>
-      <path d="M-25 70 L115 -5" stroke="#bff3ff" opacity="0.7"/>
-      <path d="M-25 130 L115 55" stroke="#ffc4e8" opacity="0.6"/>
-    </g>
+  <g stroke-width="5" opacity="0.30">
+    <use href="#ch" transform="translate(0,167)" stroke="#ff2fb3"/>
+    <use href="#ch" transform="translate(0,142)" stroke="#3b82f6"/>
+    <use href="#ch" transform="translate(0,117)" stroke="#00e5a0"/>
+    <use href="#ch" transform="translate(0,92)" stroke="#8b5cf6"/>
+    <use href="#ch" transform="translate(0,67)" stroke="#ff2fb3"/>
+    <use href="#ch" transform="translate(0,42)" stroke="#3b82f6"/>
+    <use href="#ch" transform="translate(0,17)" stroke="#00e5a0"/>
+    <use href="#ch" transform="translate(0,-8)" stroke="#8b5cf6"/>
+    <use href="#hz" transform="translate(0,96)" stroke="#4de3ff" opacity="0.55"/>
+    <use href="#hz" transform="translate(0,152)" stroke="#ff2fb3" opacity="0.5"/>
+  </g>
+  <g stroke-width="1.7" opacity="0.8">
+    <use href="#ch" transform="translate(0,167)" stroke="#ff2fb3"/>
+    <use href="#ch" transform="translate(0,142)" stroke="#3b82f6"/>
+    <use href="#ch" transform="translate(0,117)" stroke="#00e5a0"/>
+    <use href="#ch" transform="translate(0,92)" stroke="#8b5cf6"/>
+    <use href="#ch" transform="translate(0,67)" stroke="#ff2fb3"/>
+    <use href="#ch" transform="translate(0,42)" stroke="#3b82f6"/>
+    <use href="#ch" transform="translate(0,17)" stroke="#00e5a0"/>
+    <use href="#ch" transform="translate(0,-8)" stroke="#8b5cf6"/>
+    <use href="#hz" transform="translate(0,96)" stroke="#4de3ff" opacity="0.6"/>
+    <use href="#hz" transform="translate(0,152)" stroke="#ff2fb3" opacity="0.55"/>
+  </g>
+  <g stroke-width="0.7" opacity="0.95">
+    <use href="#ch" transform="translate(0,167)" stroke="#ffd7ef"/>
+    <use href="#ch" transform="translate(0,142)" stroke="#cfe4ff"/>
+    <use href="#ch" transform="translate(0,117)" stroke="#d2fcec"/>
+    <use href="#ch" transform="translate(0,92)" stroke="#ddd0ff"/>
+    <use href="#ch" transform="translate(0,67)" stroke="#ffd7ef"/>
+    <use href="#ch" transform="translate(0,42)" stroke="#cfe4ff"/>
+    <use href="#ch" transform="translate(0,17)" stroke="#d2fcec"/>
+    <use href="#ch" transform="translate(0,-8)" stroke="#ddd0ff"/>
+    <use href="#hz" transform="translate(0,96)" stroke="#d9f9ff" opacity="0.7"/>
+    <use href="#hz" transform="translate(0,152)" stroke="#ffd7ef" opacity="0.65"/>
   </g>
 </svg>
+<div class="luz-ambiente a"></div>
+<div class="luz-ambiente b"></div>
+<div class="luz-ambiente c"></div>
 <div class="velo"></div>
 
 <div id="pantalla">
