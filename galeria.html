@@ -126,8 +126,12 @@ if (!fotos.length){
   $("gal").innerHTML = fotos.map((f,i) => {
     const dl = f.replace("/image/upload/", "/image/upload/fl_attachment:photo-booth-" + (i+1) + "/");
     return `<div class="foto"><img src="${esc(f)}" alt="Fotografía ${i+1}" loading="lazy"><br>` +
-      `<a class="btn-linea" href="${esc(dl)}" download="photo-booth-${i+1}.jpg">Descargar</a></div>`;
+      `<button class="btn-linea" data-url="${esc(dl)}" data-nombre="photo-booth-${i+1}.jpg">Descargar</button></div>`;
   }).join("");
+  $("gal").addEventListener("click", e => {
+    const b = e.target.closest("button[data-url]");
+    if (b) compartirODescargar(b.dataset.url, b.dataset.nombre, b);
+  });
 
   // Pestañas
   const mostrarModo = modo => {
@@ -154,6 +158,27 @@ if (!fotos.length){
   });
 
   $("descargar-tira").onclick = descargarTira;
+}
+
+// Intenta la hoja de compartir nativa (iOS: "Guardar imagen" -> Fotos;
+// Android: guardar -> Galería). Si no se puede, descarga tradicional.
+async function compartirODescargar(url, nombre, btn){
+  const orig = btn ? btn.textContent : null;
+  try {
+    const blob = await (await fetch(url)).blob();
+    const file = new File([blob], nombre, { type: blob.type || "image/jpeg" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      if (btn) btn.textContent = "Abriendo…";
+      await navigator.share({ files: [file], title: "Photo Booth" });
+      if (btn) btn.textContent = orig;
+      return true;
+    }
+  } catch(e){ /* sigue a descarga tradicional */ }
+  if (btn) btn.textContent = orig;
+  const a = document.createElement("a");
+  a.href = url; a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  return false;
 }
 
 function cargar(url){
@@ -220,16 +245,33 @@ async function descargarTira(){
     }
 
     const blob = await new Promise(r => c.toBlob(r, "image/png"));
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "tira-photo-booth.png";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    const file = new File([blob], "tira-photo-booth.png", { type: "image/png" });
+    let listo = false;
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      btn.textContent = "Abriendo…";
+      try {
+        await navigator.share({ files: [file], title: "Mi tira Photo Booth" });
+        listo = true;
+      } catch(e){
+        // Si el usuario canceló, no se hace nada más; si falló, se descarga
+        listo = !e || e.name === "AbortError";
+        if (!listo) descargarBlob(blob, "tira-photo-booth.png");
+      }
+    }
+    if (!listo) descargarBlob(blob, "tira-photo-booth.png");
   } catch(e){
     alert("No se pudo generar la tira. Prueba con las fotos individuales.");
   }
   btn.textContent = "Descargar tira (PNG)";
   btn.disabled = false;
+}
+
+function descargarBlob(blob, nombre){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 </script>
 </body>
