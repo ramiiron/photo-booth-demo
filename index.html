@@ -65,6 +65,17 @@
                     box-shadow:0 0 12px rgba(244,63,142,.8); }
   #reintentar { position:fixed; bottom:120px; left:50%; transform:translateX(-50%); z-index:4; }
 
+  /* ===== Filtros ===== */
+  #filtros { position:fixed; bottom:238px; left:0; right:0; z-index:4;
+             display:flex; gap:10px; justify-content:flex-start;
+             overflow-x:auto; padding:10px 20px; scrollbar-width:none; }
+  #filtros::-webkit-scrollbar { display:none; }
+  .filtro { flex:0 0 auto; font-family:inherit; font-size:12px; font-weight:800;
+            letter-spacing:.08em; text-transform:uppercase; color:#fff;
+            background:rgba(255,255,255,.14); border:1.5px solid rgba(255,255,255,.25);
+            padding:10px 18px; border-radius:999px; cursor:pointer; }
+  .filtro.sel { background:#fff; color:#161616; border-color:#fff; }
+
   /* ===== Cuenta regresiva ===== */
   #cuenta { position:fixed; inset:0; z-index:5; display:none; align-items:center;
             justify-content:center; font-size:clamp(140px,38vw,220px);
@@ -104,6 +115,13 @@
     </div>
     <div class="hud-abajo"></div>
     <div id="leyenda">Sonríe</div>
+    <div id="filtros">
+      <button class="filtro sel" data-filtro="original">Original</button>
+      <button class="filtro" data-filtro="bn">B&amp;W</button>
+      <button class="filtro" data-filtro="sepia">Sepia</button>
+      <button class="filtro" data-filtro="vintage">Vintage</button>
+      <button class="filtro" data-filtro="vivido">Vívido</button>
+    </div>
     <button id="obturador" aria-label="Sacar fotos"></button>
     <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
     <button id="reintentar" class="btn-degradado oculto">Reintentar subida</button>
@@ -154,6 +172,23 @@ if (EVENTO.nombre.trim()){
   el.classList.remove("oculto");
 }
 
+// Filtros: el invitado elige antes de disparar; se aplican en la vista
+// previa y quedan grabados en la foto (y por ende en la tira)
+const FILTROS = {
+  original: "none",
+  bn:       "grayscale(1) contrast(1.08)",
+  sepia:    "sepia(0.85)",
+  vintage:  "sepia(0.35) saturate(1.5) contrast(1.05)",
+  vivido:   "saturate(1.7) contrast(1.12)",
+};
+let filtroActual = "original";
+function fijarFiltro(nombre){
+  filtroActual = FILTROS[nombre] ? nombre : "original";
+  document.querySelectorAll(".filtro").forEach(x => x.classList.toggle("sel", x.dataset.filtro === filtroActual));
+  video.style.filter = FILTROS[filtroActual];
+}
+document.querySelectorAll(".filtro").forEach(b => { b.onclick = () => fijarFiltro(b.dataset.filtro); });
+
 $("vista-inicio").onclick = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -182,6 +217,7 @@ function capturar(){
   c.height = Math.round(sh * s);
   const ctx = c.getContext("2d");
   ctx.translate(c.width, 0); ctx.scale(-1, 1); // espejo
+  ctx.filter = FILTROS[filtroActual];
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
   const f = $("flash");
   f.style.transition = "none"; f.style.opacity = "0.9";
@@ -244,6 +280,7 @@ $("obturador").onclick = async () => {
   await subirYMostrarQR(fotos);
 
   pintarPuntos(0);
+  fijarFiltro("original");
   $("leyenda").textContent = "Sonríe";
   $("obturador").style.display = "";
   $("reintentar").classList.add("oculto");
