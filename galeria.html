@@ -66,8 +66,8 @@
 <body>
 <script src="./fondo.js"></script>
 <div class="contenido">
-  <span class="pastilla pastilla-rosa">Tu sesión</span>
-  <h1 class="titular gal-titulo">Tus <span class="degradado-texto">fotografías</span></h1>
+  <span class="pastilla pastilla-rosa" id="ev-pildora">Tu sesión</span>
+  <h1 class="titular gal-titulo" id="ev-titulo">Tus <span class="degradado-texto">fotografías</span></h1>
   <p class="gal-sub" id="sub">Elige cómo llevártelas</p>
 
   <div id="opciones" class="oculto">
@@ -101,8 +101,26 @@
 
 <script>
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
-const fotos = new URLSearchParams(location.search).getAll("f").filter(u => u.startsWith("https://"));
+const qs = new URLSearchParams(location.search);
+const fotos = qs.getAll("f").filter(u => u.startsWith("https://"));
 const $ = id => document.getElementById(id);
+
+// Personalización por evento (viene en el QR desde la config del booth)
+const evNombre = (qs.get("ev") || "").trim();
+const PLANTILLAS = {
+  "fiesta":      { etiqueta: "Tu sesión" },
+  "boda":        { etiqueta: "Nuestra boda" },
+  "baby-shower": { etiqueta: "Baby shower" },
+  "cumpleanos":  { etiqueta: "Cumpleaños" },
+  "halloween":   { etiqueta: "Halloween" },
+  "graduacion":  { etiqueta: "Graduación" },
+};
+const tpl = PLANTILLAS[qs.get("tpl")] ? qs.get("tpl") : "fiesta";
+document.body.dataset.tpl = tpl;
+if (evNombre){
+  $("ev-pildora").textContent = PLANTILLAS[tpl].etiqueta;
+  $("ev-titulo").textContent = evNombre;
+}
 
 // Marcos disponibles para la tira
 const MARCOS = {
@@ -121,6 +139,7 @@ if (!fotos.length){
   // Vista previa de la tira
   $("tira-fotos").innerHTML = fotos.map((f,i) =>
     `<img src="${esc(f)}" alt="Fotografía ${i+1}" loading="lazy">`).join("");
+  $("tira-pie").textContent = evNombre || MARCOS[marcoActual].pie;
 
   // Individuales (fl_attachment fuerza la descarga con buen nombre)
   $("gal").innerHTML = fotos.map((f,i) => {
@@ -154,7 +173,7 @@ if (!fotos.length){
     const M = MARCOS[marcoActual];
     $("tira-cabeza-izq").textContent = M.cabeza[0];
     $("tira-cabeza-der").innerHTML = esc(M.cabeza[1]);
-    $("tira-pie").textContent = M.pie;
+    $("tira-pie").textContent = evNombre || M.pie;
   });
 
   $("descargar-tira").onclick = descargarTira;
@@ -238,10 +257,11 @@ async function descargarTira(){
     } else {
       x.fillText(M.cabeza[1], W / 2, pad + cabezaH / 2 + 16);
     }
-    if (M.pie){
+    const pieTxt = evNombre || M.pie;
+    if (pieTxt){
       x.font = "800 26px Montserrat, Arial, sans-serif";
       x.fillStyle = M.tinta;
-      x.fillText(M.pie, W / 2, H - pad - pieH / 2);
+      x.fillText(pieTxt, W / 2, H - pad - pieH / 2);
     }
 
     const blob = await new Promise(r => c.toBlob(r, "image/png"));

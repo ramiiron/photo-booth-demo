@@ -27,6 +27,9 @@
   .inicio-titulo { font-size:clamp(42px,10vw,76px); margin:24px 0 16px; }
   .inicio-sub { color:var(--tinta-suave); font-size:15px; font-weight:500;
                 line-height:1.7; margin-bottom:34px; }
+  .inicio-evento { font-size:13px; font-weight:800; letter-spacing:.24em;
+                   text-transform:uppercase; color:var(--tinta-suave);
+                   margin:-22px 0 30px; }
 
   /* ===== Cámara: HUD oscuro de estudio ===== */
   #preview { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
@@ -89,6 +92,7 @@
     <span class="pastilla pastilla-rosa">Self-Studio</span>
     <h1 class="titular inicio-titulo">Captura tu momento<br><span class="degradado-texto">en 3 fotos</span></h1>
     <p class="inicio-sub">Cuenta regresiva de 5 segundos · Tira lista para descargar</p>
+    <p class="inicio-evento oculto" id="inicio-evento"></p>
     <span class="btn-negro">Comenzar →</span>
   </div>
 
@@ -128,12 +132,26 @@ const BASE = location.href.replace(/\/[^/]*$/, "");
 const CLOUD_NAME = "lubasdf9";
 const UPLOAD_PRESET = "photo-booth";
 
+// ===== Configuración del evento (edítalo antes de cada evento) =====
+// El cliente elige la plantilla al reservar; aquí pones su nombre.
+const EVENTO = {
+  nombre: "",            // ej. "Baby Shower de Jennifer" ("" = sin personalizar)
+  plantilla: "fiesta",   // fiesta | boda | baby-shower | cumpleanos | halloween | graduacion
+};
+
 function mostrar(id){
   ["vista-inicio","vista-camara","vista-qr"].forEach(x => $(x).classList.toggle("oculto", x !== id));
 }
 function pintarPuntos(n){
   [...$("puntos").children].forEach((s,i) => s.classList.toggle("ok", i < n));
   $("contador").textContent = n + "/3";
+}
+
+// Muestra el nombre del evento en el inicio si está configurado
+if (EVENTO.nombre.trim()){
+  const el = $("inicio-evento");
+  el.textContent = EVENTO.nombre.trim();
+  el.classList.remove("oculto");
 }
 
 $("vista-inicio").onclick = async () => {
@@ -200,7 +218,8 @@ async function subirYMostrarQR(fotos){
       const blob = await (await fetch(fotos[i])).blob();
       urls.push(await subirFoto(blob, i));
     }
-    const url = BASE + "/galeria.html?" + urls.map(u => "f=" + encodeURIComponent(u)).join("&");
+    const url = BASE + "/galeria.html?" + urls.map(u => "f=" + encodeURIComponent(u)).join("&") +
+      "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla);
     $("qr").innerHTML = "";
     new QRCode($("qr"), { text: url, width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
     mostrar("vista-qr");

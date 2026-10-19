@@ -74,3 +74,37 @@ body { background:var(--crema); color:var(--tinta); text-align:center;
            box-shadow:var(--sombra); }
 
 .oculto { display:none !important; }
+
+/* ============================================================
+   Plantillas por ocasión (se activan con data-tpl en el <body>)
+   fiesta = diseño base. Cada plantilla cambia el degradado
+   de acento y, si hace falta, fondo y tarjetas.
+   ============================================================ */
+body[data-tpl="boda"]{
+  --crema:#faf6ec;
+  --rosa:#b98a1d; --naranja:#e8c874;
+}
+body[data-tpl="baby-shower"]{
+  --crema:#fdf3f7;
+  --rosa:#f9a8d4; --naranja:#93c5fd;
+}
+body[data-tpl="cumpleanos"]{
+  --rosa:#8b5cf6; --naranja:#f59e0b;
+}
+body[data-tpl="graduacion"]{
+  --crema:#f2f4fa;
+  --rosa:#1e40af; --naranja:#c9a227;
+}
+body[data-tpl="halloween"]{
+  --crema:#171021;
+  --tinta:#f6f1ff;
+  --tinta-suave:#b9a8d9;
+  --tarjeta:#241a33;
+  --rosa:#ff7a1a; --naranja:#8b5cf6;
+  --sombra:0 18px 45px rgba(0,0,0,.45);
+}
+body[data-tpl="halloween"] .tabs,
+body[data-tpl="halloween"] .marco{ background:#241a33; color:#f6f1ff; }
+body[data-tpl="halloween"] .marco.sel{ border-color:#ff7a1a; }
+body[data-tpl="halloween"] .tab{ color:#b9a8d9; }
+body[data-tpl="halloween"] .tab.sel{ background:#f6f1ff; color:#171021; }
