@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -16,13 +16,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./estilos.css?v=4">
 <style>
-  /* Estilos propios de la app — el tema vive en estilos.css */
+  /* App-specific styles — the theme lives in estilos.css */
   html, body { overflow:hidden; }
 
   #pantalla { position:fixed; inset:0; z-index:2; display:flex;
               align-items:center; justify-content:center; }
 
-  /* ===== Inicio ===== */
+  /* ===== Start ===== */
   #vista-inicio { cursor:pointer; padding:32px 24px; max-width:640px; }
   .inicio-titulo { font-size:clamp(42px,10vw,76px); margin:24px 0 16px; }
   .inicio-sub { color:var(--tinta-suave); font-size:15px; font-weight:500;
@@ -31,7 +31,7 @@
                    text-transform:uppercase; color:var(--tinta-suave);
                    margin:-22px 0 30px; }
 
-  /* ===== Cámara: HUD oscuro de estudio ===== */
+  /* ===== Camera: dark studio HUD ===== */
   #preview { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
              transform:scaleX(-1) scale(1.25); z-index:2; background:#000; }
   .hud-arriba { position:fixed; top:0; left:0; right:0; z-index:4;
@@ -65,7 +65,7 @@
                     box-shadow:0 0 12px rgba(244,63,142,.8); }
   #reintentar { position:fixed; bottom:120px; left:50%; transform:translateX(-50%); z-index:4; }
 
-  /* ===== Filtros ===== */
+  /* ===== Filters ===== */
   #filtros { position:fixed; bottom:238px; left:0; right:0; z-index:4;
              display:flex; gap:10px; justify-content:flex-start;
              overflow-x:auto; padding:10px 20px; scrollbar-width:none; }
@@ -76,7 +76,7 @@
             padding:10px 18px; border-radius:999px; cursor:pointer; }
   .filtro.sel { background:#fff; color:#161616; border-color:#fff; }
 
-  /* ===== Cuenta regresiva ===== */
+  /* ===== Countdown ===== */
   #cuenta { position:fixed; inset:0; z-index:5; display:none; align-items:center;
             justify-content:center; font-size:clamp(140px,38vw,220px);
             font-weight:900; color:#fff; text-shadow:0 12px 60px rgba(0,0,0,.55); }
@@ -99,43 +99,43 @@
 <script src="./fondo.js"></script>
 
 <div id="pantalla">
-  <div id="vista-inicio" role="button" aria-label="Toca para comenzar">
+  <div id="vista-inicio" role="button" aria-label="Tap to start">
     <span class="pastilla pastilla-rosa">Self-Studio</span>
-    <h1 class="titular inicio-titulo">Captura tu momento<br><span class="degradado-texto">en 3 fotos</span></h1>
-    <p class="inicio-sub">Cuenta regresiva de 5 segundos · Tira lista para descargar</p>
+    <h1 class="titular inicio-titulo">Capture your moment<br><span class="degradado-texto">in 3 photos</span></h1>
+    <p class="inicio-sub">5-second countdown · Strip ready to download</p>
     <p class="inicio-evento oculto" id="inicio-evento"></p>
-    <span class="btn-negro">Comenzar →</span>
+    <span class="btn-negro">Start →</span>
   </div>
 
   <div id="vista-camara" class="oculto">
     <video id="preview" playsinline muted autoplay></video>
     <div class="hud-arriba">
-      <span class="envivo"><span class="punto-rojo"></span>En vivo</span>
+      <span class="envivo"><span class="punto-rojo"></span>Live</span>
       <span class="contador" id="contador">0/3</span>
     </div>
     <div class="hud-abajo"></div>
-    <div id="leyenda">Sonríe</div>
+    <div id="leyenda">Smile</div>
     <div id="filtros">
       <button class="filtro sel" data-filtro="original">Original</button>
       <button class="filtro" data-filtro="bn">B&amp;W</button>
       <button class="filtro" data-filtro="sepia">Sepia</button>
       <button class="filtro" data-filtro="vintage">Vintage</button>
-      <button class="filtro" data-filtro="vivido">Vívido</button>
+      <button class="filtro" data-filtro="vivido">Vivid</button>
     </div>
-    <button id="obturador" aria-label="Sacar fotos"></button>
+    <button id="obturador" aria-label="Take photos"></button>
     <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
-    <button id="reintentar" class="btn-degradado oculto">Reintentar subida</button>
+    <button id="reintentar" class="btn-degradado oculto">Retry upload</button>
   </div>
 
   <div id="cuenta">5</div>
   <div id="flash"></div>
 
   <div id="vista-qr" class="centro oculto">
-    <span class="pastilla pastilla-verde">¡Fotos listas!</span>
-    <h2 class="titular qr-titulo">Escanea para<br>descargar</h2>
+    <span class="pastilla pastilla-verde">Photos ready!</span>
+    <h2 class="titular qr-titulo">Scan to<br>download</h2>
     <div id="qrbox"><div id="qr"></div></div>
-    <p class="qr-sub">Apunta tu cámara al código<br>y llévate tus fotos</p>
-    <button id="otra" class="btn-negro">Nueva sesión</button>
+    <p class="qr-sub">Point your camera at the code<br>and take your photos</p>
+    <button id="otra" class="btn-negro">New session</button>
   </div>
 </div>
 
@@ -146,14 +146,14 @@ const esperar = ms => new Promise(r => setTimeout(r, ms));
 const video = $("preview");
 const BASE = location.href.replace(/\/[^/]*$/, "");
 
-// ===== Configuración Cloudinary (subidas sin firma, diseñadas para el navegador) =====
+// ===== Cloudinary setup (unsigned uploads, designed for the browser) =====
 const CLOUD_NAME = "lubasdf9";
 const UPLOAD_PRESET = "photo-booth";
 
-// ===== Configuración del evento (edítalo antes de cada evento) =====
-// El cliente elige la plantilla al reservar; aquí pones su nombre.
+// ===== Event setup (edit before each event) =====
+// The client picks the template when booking; put their name here.
 const EVENTO = {
-  nombre: "",            // ej. "Baby Shower de Jennifer" ("" = sin personalizar)
+  nombre: "",            // e.g. "Jennifer's Baby Shower" ("" = no customization)
   plantilla: "fiesta",   // fiesta | boda | baby-shower | cumpleanos | halloween | graduacion
 };
 
@@ -165,15 +165,15 @@ function pintarPuntos(n){
   $("contador").textContent = n + "/3";
 }
 
-// Muestra el nombre del evento en el inicio si está configurado
+// Show the event name on the start screen if set
 if (EVENTO.nombre.trim()){
   const el = $("inicio-evento");
   el.textContent = EVENTO.nombre.trim();
   el.classList.remove("oculto");
 }
 
-// Filtros: el invitado elige antes de disparar; se aplican en la vista
-// previa y quedan grabados en la foto (y por ende en la tira)
+// Filters: the guest picks one before shooting; applied to the live
+// preview and baked into the photo (and therefore the strip)
 const FILTROS = {
   original: "none",
   bn:       "grayscale(1) contrast(1.08)",
@@ -199,14 +199,14 @@ $("vista-inicio").onclick = async () => {
     await video.play();
     mostrar("vista-camara");
   } catch (e) {
-    alert("No se pudo activar la cámara. Revisa el permiso en Ajustes.");
+    alert("Couldn't access the camera. Check the permission in Settings.");
   }
 };
 
 function capturar(){
   const c = document.createElement("canvas");
-  // Recorte central del 10% por lado: elimina las orillas, que es donde
-  // el gran angular de la cámara frontal más distorsiona (efecto ojo de pez)
+  // 10% center crop per side: removes the edges, where the front
+  // camera's wide angle distorts the most (fisheye effect)
   const r = 0.10;
   const sw = video.videoWidth * (1 - r*2);
   const sh = video.videoHeight * (1 - r*2);
@@ -216,7 +216,7 @@ function capturar(){
   c.width = Math.round(sw * s);
   c.height = Math.round(sh * s);
   const ctx = c.getContext("2d");
-  ctx.translate(c.width, 0); ctx.scale(-1, 1); // espejo
+  ctx.translate(c.width, 0); ctx.scale(-1, 1); // mirror
   ctx.filter = FILTROS[filtroActual];
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
   const f = $("flash");
@@ -250,7 +250,7 @@ async function subirYMostrarQR(fotos){
   try {
     const urls = [];
     for (let i = 0; i < fotos.length; i++){
-      $("leyenda").textContent = "Subiendo fotos… " + (i+1) + "/3";
+      $("leyenda").textContent = "Uploading photos… " + (i+1) + "/3";
       const blob = await (await fetch(fotos[i])).blob();
       urls.push(await subirFoto(blob, i));
     }
@@ -260,7 +260,7 @@ async function subirYMostrarQR(fotos){
     new QRCode($("qr"), { text: url, width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
     mostrar("vista-qr");
   } catch(e){
-    $("leyenda").textContent = "Falló la subida. Revisa tu internet.";
+    $("leyenda").textContent = "Upload failed. Check your internet.";
     $("reintentar").classList.remove("oculto");
     $("reintentar").onclick = () => subirYMostrarQR(fotos);
   }
@@ -271,7 +271,7 @@ $("obturador").onclick = async () => {
 
   const fotos = [];
   for (let i = 1; i <= 3; i++){
-    $("leyenda").textContent = `Foto ${i} de 3 — prepárate`;
+    $("leyenda").textContent = `Photo ${i} of 3 — get ready`;
     await cuentaRegresiva(5);
     fotos.push(capturar());
     pintarPuntos(i);
@@ -281,7 +281,7 @@ $("obturador").onclick = async () => {
 
   pintarPuntos(0);
   fijarFiltro("original");
-  $("leyenda").textContent = "Sonríe";
+  $("leyenda").textContent = "Smile";
   $("obturador").style.display = "";
   $("reintentar").classList.add("oculto");
 };

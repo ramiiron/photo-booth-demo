@@ -1,6 +1,6 @@
-// Fondo cálido compartido: manchas pastel sobre crema.
-// Se inyecta al inicio del <body>. Para cambiar el fondo de
-// todas las páginas, edita este archivo.
+// Shared warm background: pastel blobs over cream.
+// Injected at the start of <body>. To change the background of
+// all pages, edit this file.
 document.body.insertAdjacentHTML("afterbegin", `
 <div class="fondo-calido a"></div>
 <div class="fondo-calido b"></div>

@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#f4f1ea">
-<title>Tus fotografías — Photo Booth</title>
+<title>Your photos — Photo Booth</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./estilos.css?v=4">
 <style>
-  /* Estilos propios de la galería — el tema vive en estilos.css */
+  /* Gallery-specific styles — the theme lives in estilos.css */
   body { padding:56px 20px 90px; }
   .contenido { position:relative; z-index:2; max-width:640px; margin:0 auto; }
   .gal-titulo { font-size:clamp(36px,9vw,60px); margin:20px 0 10px; }
   .gal-sub { color:var(--tinta-suave); font-size:15px; font-weight:500; margin-bottom:26px; }
 
-  /* Pestañas Tira / Individuales */
+  /* Strip / Individuals tabs */
   .tabs { display:inline-flex; background:#fff; border-radius:999px; padding:5px;
           box-shadow:var(--sombra); margin-bottom:30px; }
   .tab { font-family:inherit; font-weight:800; font-size:13px; letter-spacing:.1em;
@@ -24,7 +24,7 @@
          padding:12px 26px; border-radius:999px; cursor:pointer; }
   .tab.sel { background:var(--tinta); color:#fff; }
 
-  /* Marcos de la tira */
+  /* Strip frames */
   .marcos { display:flex; gap:10px; justify-content:center; margin-bottom:24px; flex-wrap:wrap; }
   .marco { font-family:inherit; border:2px solid transparent; background:#fff;
            border-radius:16px; padding:10px 14px; cursor:pointer;
@@ -37,7 +37,7 @@
   .mini.pastel { background:linear-gradient(160deg,#ffd6e8,#d9c8ff); }
   .mini.noir { background:#0b0b0d; }
 
-  /* Vista previa de la tira (proporción 600:1800) */
+  /* Strip preview (600:1800 ratio) */
   .tira { width:200px; aspect-ratio:600/1800; margin:0 auto 26px; padding:12px;
           display:flex; flex-direction:column; border-radius:10px;
           box-shadow:var(--sombra); }
@@ -54,7 +54,7 @@
   .tira.noir { background:#0b0b0d; color:#7dff9a; }
   .tira.noir .rec { color:#ff3b3b; }
 
-  /* Individuales */
+  /* Individuals */
   .foto { margin-bottom:40px; }
   .foto img { width:100%; max-width:520px; border-radius:20px; display:block;
               margin:0 auto 18px; box-shadow:var(--sombra); background:#fff; }
@@ -66,20 +66,20 @@
 <body>
 <script src="./fondo.js"></script>
 <div class="contenido">
-  <span class="pastilla pastilla-rosa" id="ev-pildora">Tu sesión</span>
-  <h1 class="titular gal-titulo" id="ev-titulo">Tus <span class="degradado-texto">fotografías</span></h1>
-  <p class="gal-sub" id="sub">Elige cómo llevártelas</p>
+  <span class="pastilla pastilla-rosa" id="ev-pildora">Your session</span>
+  <h1 class="titular gal-titulo" id="ev-titulo">Your <span class="degradado-texto">photos</span></h1>
+  <p class="gal-sub" id="sub">Choose how to take them</p>
 
   <div id="opciones" class="oculto">
     <div class="tabs">
-      <button class="tab sel" id="tab-tira">Tira</button>
-      <button class="tab" id="tab-ind">Individuales</button>
+      <button class="tab sel" id="tab-tira">Strip</button>
+      <button class="tab" id="tab-ind">Individuals</button>
     </div>
 
     <div id="vista-tira">
       <div class="marcos" id="marcos">
         <button class="marco sel" data-marco="retro"><span class="mini retro"></span>Retro</button>
-        <button class="marco" data-marco="clasico"><span class="mini clasico"></span>Clásico</button>
+        <button class="marco" data-marco="clasico"><span class="mini clasico"></span>Classic</button>
         <button class="marco" data-marco="pastel"><span class="mini pastel"></span>Pastel</button>
         <button class="marco" data-marco="noir"><span class="mini noir"></span>Noir</button>
       </div>
@@ -88,7 +88,7 @@
         <div class="tira-fotos" id="tira-fotos"></div>
         <div class="tira-pie" id="tira-pie">✦ MEMORIES ✦</div>
       </div>
-      <button class="btn-negro" id="descargar-tira">Descargar tira (PNG)</button>
+      <button class="btn-negro" id="descargar-tira">Download strip (PNG)</button>
     </div>
 
     <div id="vista-ind" class="oculto">
@@ -96,7 +96,7 @@
     </div>
   </div>
 
-  <footer>Gracias por venir</footer>
+  <footer>Thanks for coming</footer>
 </div>
 
 <script>
@@ -105,15 +105,15 @@ const qs = new URLSearchParams(location.search);
 const fotos = qs.getAll("f").filter(u => u.startsWith("https://"));
 const $ = id => document.getElementById(id);
 
-// Personalización por evento (viene en el QR desde la config del booth)
+// Per-event customization (comes in the QR from the booth config)
 const evNombre = (qs.get("ev") || "").trim();
 const PLANTILLAS = {
-  "fiesta":      { etiqueta: "Tu sesión" },
-  "boda":        { etiqueta: "Nuestra boda" },
+  "fiesta":      { etiqueta: "Your session" },
+  "boda":        { etiqueta: "Our wedding" },
   "baby-shower": { etiqueta: "Baby shower" },
-  "cumpleanos":  { etiqueta: "Cumpleaños" },
+  "cumpleanos":  { etiqueta: "Birthday" },
   "halloween":   { etiqueta: "Halloween" },
-  "graduacion":  { etiqueta: "Graduación" },
+  "graduacion":  { etiqueta: "Graduation" },
 };
 const tpl = PLANTILLAS[qs.get("tpl")] ? qs.get("tpl") : "fiesta";
 document.body.dataset.tpl = tpl;
@@ -122,7 +122,7 @@ if (evNombre){
   $("ev-titulo").textContent = evNombre;
 }
 
-// Marcos disponibles para la tira
+// Available strip frames
 const MARCOS = {
   retro:   { cabeza:["PHOTO BOOTH","RETRO · 2026"], pie:"✦ MEMORIES ✦", fondo:"#f5eedd", tinta:"#2b2118", fuente:800 },
   clasico: { cabeza:["FLASHBOX SEOUL","CLASSIC MINIMAL"], pie:"", fondo:"#ffffff", tinta:"#9a9a9a", fuente:800 },
@@ -132,27 +132,27 @@ const MARCOS = {
 let marcoActual = "retro";
 
 if (!fotos.length){
-  $("sub").innerHTML = "Esta galería necesita un link con fotos.<br>Escanea el QR del Photo Booth para ver las tuyas.";
+  $("sub").innerHTML = "This gallery needs a link with photos.<br>Scan the Photo Booth QR code to see yours.";
 } else {
   $("opciones").classList.remove("oculto");
 
-  // Vista previa de la tira
+  // Strip preview
   $("tira-fotos").innerHTML = fotos.map((f,i) =>
-    `<img src="${esc(f)}" alt="Fotografía ${i+1}" loading="lazy">`).join("");
+    `<img src="${esc(f)}" alt="Photo ${i+1}" loading="lazy">`).join("");
   $("tira-pie").textContent = evNombre || MARCOS[marcoActual].pie;
 
-  // Individuales (fl_attachment fuerza la descarga con buen nombre)
+  // Individuals (fl_attachment forces download with a good filename)
   $("gal").innerHTML = fotos.map((f,i) => {
     const dl = f.replace("/image/upload/", "/image/upload/fl_attachment:photo-booth-" + (i+1) + "/");
-    return `<div class="foto"><img src="${esc(f)}" alt="Fotografía ${i+1}" loading="lazy"><br>` +
-      `<button class="btn-linea" data-url="${esc(dl)}" data-nombre="photo-booth-${i+1}.jpg">Descargar</button></div>`;
+    return `<div class="foto"><img src="${esc(f)}" alt="Photo ${i+1}" loading="lazy"><br>` +
+      `<button class="btn-linea" data-url="${esc(dl)}" data-nombre="photo-booth-${i+1}.jpg">Download</button></div>`;
   }).join("");
   $("gal").addEventListener("click", e => {
     const b = e.target.closest("button[data-url]");
     if (b) compartirODescargar(b.dataset.url, b.dataset.nombre, b);
   });
 
-  // Pestañas
+  // Tabs
   const mostrarModo = modo => {
     $("vista-tira").classList.toggle("oculto", modo !== "tira");
     $("vista-ind").classList.toggle("oculto", modo !== "ind");
@@ -162,7 +162,7 @@ if (!fotos.length){
   $("tab-tira").onclick = () => mostrarModo("tira");
   $("tab-ind").onclick = () => mostrarModo("ind");
 
-  // Cambio de marco
+  // Frame switch
   $("marcos").addEventListener("click", e => {
     const b = e.target.closest(".marco");
     if (!b) return;
@@ -179,15 +179,15 @@ if (!fotos.length){
   $("descargar-tira").onclick = descargarTira;
 }
 
-// Intenta la hoja de compartir nativa (iOS: "Guardar imagen" -> Fotos;
-// Android: guardar -> Galería). Si no se puede, descarga tradicional.
+// Try the native share sheet (iOS: "Save Image" -> Photos;
+// Android: save -> Gallery). Falls back to traditional download.
 async function compartirODescargar(url, nombre, btn){
   const orig = btn ? btn.textContent : null;
   try {
     const blob = await (await fetch(url)).blob();
     const file = new File([blob], nombre, { type: blob.type || "image/jpeg" });
     if (navigator.canShare && navigator.canShare({ files: [file] })){
-      if (btn) btn.textContent = "Abriendo…";
+      if (btn) btn.textContent = "Opening…";
       await navigator.share({ files: [file], title: "Photo Booth" });
       if (btn) btn.textContent = orig;
       return true;
@@ -217,7 +217,7 @@ function dibujarCover(x, img, dx, dy, dw, dh){
 
 async function descargarTira(){
   const btn = $("descargar-tira");
-  btn.textContent = "Generando…";
+  btn.textContent = "Generating…";
   btn.disabled = true;
   try {
     await document.fonts.ready;
@@ -229,7 +229,7 @@ async function descargarTira(){
     c.width = W; c.height = H;
     const x = c.getContext("2d");
 
-    // Fondo
+    // Background
     if (M.degradado){
       const g = x.createLinearGradient(0, 0, W * 0.3, H);
       g.addColorStop(0, M.degradado[0]); g.addColorStop(1, M.degradado[1]);
@@ -239,11 +239,11 @@ async function descargarTira(){
     }
     x.fillRect(0, 0, W, H);
 
-    // Fotos
+    // Photos
     const imgs = await Promise.all(fotos.map(cargar));
     imgs.forEach((img, i) => dibujarCover(x, img, pad, pad + cabezaH + i * (fh + gap), fw, fh));
 
-    // Textos
+    // Text
     x.fillStyle = M.tinta;
     x.textAlign = "center";
     x.textBaseline = "middle";
@@ -268,21 +268,21 @@ async function descargarTira(){
     const file = new File([blob], "tira-photo-booth.png", { type: "image/png" });
     let listo = false;
     if (navigator.canShare && navigator.canShare({ files: [file] })){
-      btn.textContent = "Abriendo…";
+      btn.textContent = "Opening…";
       try {
-        await navigator.share({ files: [file], title: "Mi tira Photo Booth" });
+        await navigator.share({ files: [file], title: "My Photo Booth strip" });
         listo = true;
       } catch(e){
-        // Si el usuario canceló, no se hace nada más; si falló, se descarga
+        // If the user cancelled, do nothing more; if it failed, download
         listo = !e || e.name === "AbortError";
         if (!listo) descargarBlob(blob, "tira-photo-booth.png");
       }
     }
     if (!listo) descargarBlob(blob, "tira-photo-booth.png");
   } catch(e){
-    alert("No se pudo generar la tira. Prueba con las fotos individuales.");
+    alert("Couldn't generate the strip. Try the individual photos.");
   }
-  btn.textContent = "Descargar tira (PNG)";
+  btn.textContent = "Download strip (PNG)";
   btn.disabled = false;
 }
 

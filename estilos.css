@@ -1,9 +1,9 @@
 /* ============================================================
-   Photo Booth — tema "Self-Studio" (inspirado en estudios
-   coreanos de autofotos)
-   Para cambiar el diseño de TODAS las páginas, edita este
-   archivo (y fondo.js para el fondo). Cada página solo trae
-   sus estilos propios en su <style>.
+   Photo Booth — "Self-Studio" theme (inspired by Korean
+   self-photo studios)
+   To change the design of ALL pages, edit this file
+   (and fondo.js for the background). Each page only carries
+   its own styles in its <style>.
    ============================================================ */
 :root{
   --crema:#f4f1ea;
@@ -76,9 +76,9 @@ body { background:var(--crema); color:var(--tinta); text-align:center;
 .oculto { display:none !important; }
 
 /* ============================================================
-   Plantillas por ocasión (se activan con data-tpl en el <body>)
-   fiesta = diseño base. Cada plantilla cambia el degradado
-   de acento y, si hace falta, fondo y tarjetas.
+   Per-occasion templates (activated with data-tpl on <body>)
+   fiesta = base design. Each template changes the accent
+   gradient and, if needed, background and cards.
    ============================================================ */
 body[data-tpl="boda"]{
   --crema:#faf6ec;
