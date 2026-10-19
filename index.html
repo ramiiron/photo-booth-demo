@@ -5,9 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#04050c">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f4f1ea">
 <title>Photo Booth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./estilos.css">
 <style>
   /* Estilos propios de la app — el tema vive en estilos.css */
@@ -16,54 +19,62 @@
   #pantalla { position:fixed; inset:0; z-index:2; display:flex;
               align-items:center; justify-content:center; }
 
-  /* ===== Inicio: toda la pantalla es el botón ===== */
-  #vista-inicio { cursor:pointer; padding:24px; }
-  .inicio-l1 { font-size:clamp(44px,11vw,84px); letter-spacing:.08em; line-height:1.05; }
-  .inicio-l2 { font-size:clamp(64px,16vw,124px); letter-spacing:.05em; line-height:1.02; margin-top:6px; }
+  /* ===== Inicio ===== */
+  #vista-inicio { cursor:pointer; padding:32px 24px; max-width:640px; }
+  .inicio-titulo { font-size:clamp(42px,10vw,76px); margin:24px 0 16px; }
+  .inicio-sub { color:var(--tinta-suave); font-size:15px; font-weight:500;
+                line-height:1.7; margin-bottom:34px; }
 
-  /* ===== Cámara ===== */
+  /* ===== Cámara: HUD oscuro de estudio ===== */
   #preview { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
-             transform:scaleX(-1); z-index:2; }
-  .degradado { position:fixed; inset:0; z-index:3; pointer-events:none;
-               background:linear-gradient(to top, rgba(2,3,8,.6), transparent 30%),
-                           linear-gradient(to bottom, rgba(2,3,8,.45), transparent 26%); }
-  #leyenda { position:fixed; top:36px; left:0; right:0; z-index:4;
-             font-size:clamp(22px,5.5vw,34px); letter-spacing:.14em; }
-  #obturador { position:fixed; bottom:46px; left:50%; transform:translateX(-50%); z-index:4;
-               width:94px; height:94px; border-radius:50%; cursor:pointer;
-               border:3px solid rgba(238,248,255,.95); background:rgba(4,5,12,.25);
-               box-shadow:0 0 14px rgba(77,227,255,.8),
-                          0 0 44px rgba(77,227,255,.4),
-                          inset 0 0 18px rgba(77,227,255,.35); }
-  #obturador::after { content:""; position:absolute; inset:12px; border-radius:50%;
-                      border:2px solid rgba(77,227,255,.7);
-                      box-shadow:0 0 10px rgba(77,227,255,.6); }
+             transform:scaleX(-1); z-index:2; background:#000; }
+  .hud-arriba { position:fixed; top:0; left:0; right:0; z-index:4;
+                display:flex; justify-content:space-between; align-items:center;
+                padding:22px 22px 46px;
+                background:linear-gradient(to bottom, rgba(0,0,0,.55), transparent);
+                pointer-events:none; }
+  .envivo { display:inline-flex; align-items:center; gap:8px; color:#fff;
+            font-size:12px; font-weight:800; letter-spacing:.2em; }
+  .punto-rojo { width:9px; height:9px; border-radius:50%; background:#ff3b3b;
+                box-shadow:0 0 10px #ff3b3b; }
+  .contador { color:#fff; font-size:12px; font-weight:800; letter-spacing:.2em;
+              background:rgba(255,255,255,.16); padding:8px 16px; border-radius:999px; }
+  .hud-abajo { position:fixed; bottom:0; left:0; right:0; z-index:3; height:230px;
+               background:linear-gradient(to top, rgba(0,0,0,.6), transparent);
+               pointer-events:none; }
+  #leyenda { position:fixed; bottom:196px; left:0; right:0; z-index:4; color:#fff;
+             font-size:clamp(17px,4.5vw,25px); font-weight:800; letter-spacing:.1em;
+             text-transform:uppercase; text-shadow:0 2px 18px rgba(0,0,0,.6); }
+  #obturador { position:fixed; bottom:48px; left:50%; transform:translateX(-50%); z-index:4;
+               width:88px; height:88px; border-radius:50%; cursor:pointer;
+               border:4px solid #fff; background:rgba(255,255,255,.14);
+               box-shadow:0 0 0 6px rgba(244,63,142,.35), 0 8px 30px rgba(0,0,0,.45); }
+  #obturador::after { content:""; position:absolute; inset:16px; border-radius:50%;
+                      background:var(--degradado); }
   #obturador:active { transform:translateX(-50%) scale(.92); }
-  .puntos { position:fixed; bottom:162px; left:0; right:0; z-index:4; }
-  .puntos span { display:inline-block; width:8px; height:8px; border-radius:50%;
-                 background:rgba(238,248,255,.25); margin:0 8px; transition:all .3s; }
-  .puntos span.ok { background:var(--cyan);
-                    box-shadow:0 0 10px var(--cyan), 0 0 26px rgba(77,227,255,.7); }
+  .puntos { position:fixed; bottom:158px; left:0; right:0; z-index:4; }
+  .puntos span { display:inline-block; width:9px; height:9px; border-radius:50%;
+                 background:rgba(255,255,255,.35); margin:0 8px; transition:all .3s; }
+  .puntos span.ok { background:var(--degradado);
+                    box-shadow:0 0 12px rgba(244,63,142,.8); }
   #reintentar { position:fixed; bottom:120px; left:50%; transform:translateX(-50%); z-index:4; }
 
   /* ===== Cuenta regresiva ===== */
   #cuenta { position:fixed; inset:0; z-index:5; display:none; align-items:center;
-            justify-content:center; font-size:clamp(140px,38vw,220px); }
+            justify-content:center; font-size:clamp(140px,38vw,220px);
+            font-weight:900; color:#fff; text-shadow:0 12px 60px rgba(0,0,0,.55); }
   #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none;
            z-index:6; transition:opacity .45s; }
 
   /* ===== QR ===== */
-  .centro { position:relative; z-index:2; padding:24px; width:100%;
+  .centro { position:relative; z-index:2; padding:32px 24px; width:100%;
             max-height:100%; overflow-y:auto; }
-  .qr-titulo { font-size:clamp(34px,8.5vw,58px); letter-spacing:.06em; line-height:1.1;
-               margin-bottom:26px; }
-  #qrbox { display:inline-block; background:#fff; padding:14px; border-radius:16px;
-           margin:0 auto 26px;
-           box-shadow:0 0 18px rgba(77,227,255,.75), 0 0 60px rgba(255,47,179,.35); }
+  .qr-titulo { font-size:clamp(34px,8.5vw,56px); margin:20px 0 26px; }
+  #qrbox { display:inline-block; background:#fff; padding:16px; border-radius:20px;
+           margin:0 auto 24px; box-shadow:var(--sombra); }
   #qrbox img, #qrbox canvas, #qrbox table { display:block; }
-  .sub-neon { font-size:15px; letter-spacing:.28em; margin-bottom:34px; }
-  .btn-neon { font-size:14px; letter-spacing:.3em;
-              padding:18px 46px 18px calc(46px + .3em); }
+  .qr-sub { color:var(--tinta-suave); font-size:15px; font-weight:500;
+            line-height:1.7; margin-bottom:30px; }
 </style>
 </head>
 <body>
@@ -72,27 +83,34 @@
 
 <div id="pantalla">
   <div id="vista-inicio" role="button" aria-label="Toca para comenzar">
-    <div class="neon inicio-l1">Toca para</div>
-    <div class="neon-rosa inicio-l2">Comenzar</div>
+    <span class="pastilla pastilla-rosa">Self-Studio</span>
+    <h1 class="titular inicio-titulo">Captura tu momento<br><span class="degradado-texto">en 3 fotos</span></h1>
+    <p class="inicio-sub">Cuenta regresiva de 5 segundos · Tira lista para descargar</p>
+    <span class="btn-negro">Comenzar →</span>
   </div>
 
   <div id="vista-camara" class="oculto">
     <video id="preview" playsinline muted autoplay></video>
-    <div class="degradado"></div>
-    <div id="leyenda" class="neon">Sonríe</div>
+    <div class="hud-arriba">
+      <span class="envivo"><span class="punto-rojo"></span>En vivo</span>
+      <span class="contador" id="contador">0/3</span>
+    </div>
+    <div class="hud-abajo"></div>
+    <div id="leyenda">Sonríe</div>
     <button id="obturador" aria-label="Sacar fotos"></button>
     <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
-    <button id="reintentar" class="btn-neon oculto">Reintentar subida</button>
+    <button id="reintentar" class="btn-degradado oculto">Reintentar subida</button>
   </div>
 
-  <div id="cuenta" class="neon">5</div>
+  <div id="cuenta">5</div>
   <div id="flash"></div>
 
   <div id="vista-qr" class="centro oculto">
-    <div class="neon qr-titulo">Gracias<br>por posar</div>
+    <span class="pastilla pastilla-verde">¡Fotos listas!</span>
+    <h2 class="titular qr-titulo">Escanea para<br>descargar</h2>
     <div id="qrbox"><div id="qr"></div></div>
-    <div class="sub-neon">Escanea el código<br>para llevarte tus fotos</div>
-    <button id="otra" class="btn-neon">Nueva sesión</button>
+    <p class="qr-sub">Apunta tu cámara al código<br>y llévate tus fotos</p>
+    <button id="otra" class="btn-negro">Nueva sesión</button>
   </div>
 </div>
 
@@ -112,6 +130,7 @@ function mostrar(id){
 }
 function pintarPuntos(n){
   [...$("puntos").children].forEach((s,i) => s.classList.toggle("ok", i < n));
+  $("contador").textContent = n + "/3";
 }
 
 $("vista-inicio").onclick = async () => {

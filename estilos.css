@@ -1,56 +1,76 @@
 /* ============================================================
-   Photo Booth — tema compartido
+   Photo Booth — tema "Self-Studio" (inspirado en estudios
+   coreanos de autofotos)
    Para cambiar el diseño de TODAS las páginas, edita este
    archivo (y fondo.js para el fondo). Cada página solo trae
    sus estilos propios en su <style>.
    ============================================================ */
 :root{
-  --navy:#04050c;
-  --ice:#eef8ff;
-  --cyan:#4de3ff;
-  --pink:#ff2fb3;
-  --blue:#3b82f6;
-  --teal:#00e5a0;
-  --violet:#8b5cf6;
+  --crema:#f4f1ea;
+  --tinta:#161616;
+  --tinta-suave:#5c5c5c;
+  --rosa:#f43f8e;
+  --naranja:#ff7a1a;
+  --degradado:linear-gradient(100deg, var(--rosa), var(--naranja));
+  --tarjeta:#ffffff;
+  --sombra:0 18px 45px rgba(22,22,22,.10);
+  --radio:26px;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100%; }
-body { background:var(--navy); color:var(--ice); text-align:center;
-       font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;
+body { background:var(--crema); color:var(--tinta); text-align:center;
+       font-family:Montserrat,"Helvetica Neue",Arial,sans-serif;
        -webkit-font-smoothing:antialiased; }
 
-/* ----- Fondo neón: franjas en zigzag (estático: se pinta una sola vez) ----- */
-.fondo-neon { position:fixed; inset:0; width:100%; height:100%;
-              z-index:0; pointer-events:none; }
-.luz-ambiente { position:fixed; inset:0; z-index:0; pointer-events:none; }
-.luz-ambiente.a { background:radial-gradient(60% 45% at 18% 12%, rgba(255,47,179,.20), transparent 70%); }
-.luz-ambiente.b { background:radial-gradient(65% 50% at 85% 88%, rgba(59,130,246,.20), transparent 70%); }
-.luz-ambiente.c { background:radial-gradient(50% 40% at 80% 15%, rgba(0,229,160,.12), transparent 70%); }
-.velo { position:fixed; inset:0; z-index:1; pointer-events:none;
-        background:radial-gradient(ellipse at 50% 42%, transparent 25%, rgba(2,3,8,.72) 100%); }
+/* ----- Fondo claro cálido con manchas pastel (estático) ----- */
+.fondo-calido { position:fixed; inset:0; z-index:0; pointer-events:none; }
+.fondo-calido.a { background:radial-gradient(55% 40% at 12% 8%, rgba(244,63,142,.14), transparent 70%); }
+.fondo-calido.b { background:radial-gradient(50% 38% at 88% 20%, rgba(255,122,26,.12), transparent 70%); }
+.fondo-calido.c { background:radial-gradient(60% 45% at 50% 105%, rgba(150,120,255,.12), transparent 70%); }
 
-/* ----- Texto tubo de neón ----- */
-.neon { font-weight:700; text-transform:uppercase; color:#f4fbff;
-        -webkit-text-stroke:1.5px rgba(238,248,255,.92);
-        text-shadow:0 0 6px rgba(125,211,252,.95),
-                    0 0 22px rgba(56,189,248,.8),
-                    0 0 64px rgba(14,165,233,.55); }
-.neon-rosa { font-weight:700; text-transform:uppercase; color:#fff5fb;
-        -webkit-text-stroke:1.5px rgba(255,240,250,.92);
-        text-shadow:0 0 6px rgba(255,120,200,.95),
-                    0 0 22px rgba(255,47,179,.8),
-                    0 0 64px rgba(255,47,179,.55); }
-.sub-neon { text-transform:uppercase; color:#bfe9ff;
-            text-shadow:0 0 12px rgba(77,227,255,.7); }
+/* ----- Pastilla / etiqueta ----- */
+.pastilla { display:inline-block; font-size:12px; font-weight:800;
+            letter-spacing:.22em; text-transform:uppercase;
+            padding:10px 20px 10px calc(20px + .22em); border-radius:999px; }
+.pastilla-rosa { color:#fff; background:var(--degradado);
+                 box-shadow:0 8px 22px rgba(244,63,142,.35); }
+.pastilla-verde { color:#0d7a3f; background:#d9f5e5; }
+.pastilla-linea { color:var(--tinta); background:#fff;
+                  border:1.5px solid rgba(22,22,22,.14); }
 
-/* ----- Botón neón (sirve para <button> y <a>) ----- */
-.btn-neon { display:inline-block; text-decoration:none; font-family:inherit;
-            font-weight:700; text-transform:uppercase; color:var(--ice); cursor:pointer;
-            border-radius:999px; border:2px solid rgba(77,227,255,.9);
-            background:rgba(77,227,255,.07);
-            box-shadow:0 0 14px rgba(77,227,255,.55),
-                       inset 0 0 14px rgba(77,227,255,.22);
-            text-shadow:0 0 10px rgba(125,211,252,.9); }
-.btn-neon:active { background:rgba(77,227,255,.22); }
+/* ----- Texto con degradado rosa→naranja ----- */
+.degradado-texto { background:var(--degradado);
+                   -webkit-background-clip:text; background-clip:text;
+                   -webkit-text-fill-color:transparent; color:transparent; }
+
+/* ----- Titular pesado ----- */
+.titular { font-weight:900; letter-spacing:-.02em; line-height:1.02;
+           color:var(--tinta); }
+
+/* ----- Botones ----- */
+.btn-negro { display:inline-block; text-decoration:none; font-family:inherit;
+             font-weight:800; font-size:15px; letter-spacing:.12em;
+             text-transform:uppercase; color:#fff; background:var(--tinta);
+             padding:18px 44px 18px calc(44px + .12em); border:none;
+             border-radius:999px; cursor:pointer;
+             box-shadow:0 14px 30px rgba(22,22,22,.28); }
+.btn-negro:active { transform:scale(.97); }
+.btn-degradado { display:inline-block; text-decoration:none; font-family:inherit;
+                 font-weight:800; font-size:15px; letter-spacing:.12em;
+                 text-transform:uppercase; color:#fff; background:var(--degradado);
+                 padding:18px 44px 18px calc(44px + .12em); border:none;
+                 border-radius:999px; cursor:pointer;
+                 box-shadow:0 14px 30px rgba(244,63,142,.35); }
+.btn-degradado:active { transform:scale(.97); }
+.btn-linea { display:inline-block; text-decoration:none; font-family:inherit;
+              font-weight:800; font-size:14px; letter-spacing:.12em;
+              text-transform:uppercase; color:var(--tinta); background:#fff;
+              padding:16px 38px 16px calc(38px + .12em);
+              border:2px solid rgba(22,22,22,.16); border-radius:999px; cursor:pointer; }
+.btn-linea:active { transform:scale(.97); }
+
+/* ----- Tarjeta blanca redondeada ----- */
+.tarjeta { background:var(--tarjeta); border-radius:var(--radio);
+           box-shadow:var(--sombra); }
 
 .oculto { display:none !important; }

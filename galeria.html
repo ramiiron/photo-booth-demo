@@ -3,49 +3,233 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#04050c">
+<meta name="theme-color" content="#f4f1ea">
 <title>Tus fotografías — Photo Booth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./estilos.css">
 <style>
   /* Estilos propios de la galería — el tema vive en estilos.css */
-  body { padding:60px 20px 90px; }
+  body { padding:56px 20px 90px; }
+  .contenido { position:relative; z-index:2; max-width:640px; margin:0 auto; }
+  .gal-titulo { font-size:clamp(36px,9vw,60px); margin:20px 0 10px; }
+  .gal-sub { color:var(--tinta-suave); font-size:15px; font-weight:500; margin-bottom:26px; }
 
-  .contenido { position:relative; z-index:2; }
-  h1 { font-size:clamp(38px,9vw,64px); letter-spacing:.06em; margin-bottom:8px; }
-  .sub-neon { font-size:14px; letter-spacing:.3em; margin-bottom:52px; line-height:2; }
-  .foto { margin-bottom:44px; }
-  .foto img { width:100%; max-width:560px; border-radius:18px; display:block;
-              margin:0 auto 18px;
-              box-shadow:0 0 22px rgba(77,227,255,.35), 0 0 70px rgba(255,47,179,.18); }
-  .btn-neon { font-size:13px; letter-spacing:.3em;
-              padding:16px 42px 16px calc(42px + .3em); }
-  footer { font-size:12px; letter-spacing:.24em; text-transform:uppercase;
-           color:#8fa3bd; margin-top:20px; }
+  /* Pestañas Tira / Individuales */
+  .tabs { display:inline-flex; background:#fff; border-radius:999px; padding:5px;
+          box-shadow:var(--sombra); margin-bottom:30px; }
+  .tab { font-family:inherit; font-weight:800; font-size:13px; letter-spacing:.1em;
+         text-transform:uppercase; border:none; background:transparent; color:var(--tinta-suave);
+         padding:12px 26px; border-radius:999px; cursor:pointer; }
+  .tab.sel { background:var(--tinta); color:#fff; }
+
+  /* Marcos de la tira */
+  .marcos { display:flex; gap:10px; justify-content:center; margin-bottom:24px; flex-wrap:wrap; }
+  .marco { font-family:inherit; border:2px solid transparent; background:#fff;
+           border-radius:16px; padding:10px 14px; cursor:pointer;
+           display:flex; align-items:center; gap:9px;
+           font-size:12px; font-weight:800; letter-spacing:.06em; color:var(--tinta); }
+  .marco.sel { border-color:var(--tinta); }
+  .mini { width:22px; height:34px; border-radius:4px; display:block; }
+  .mini.retro { background:#f5eedd; border:1px solid #d8c9a8; }
+  .mini.clasico { background:#fff; border:1px solid #ddd; }
+  .mini.pastel { background:linear-gradient(160deg,#ffd6e8,#d9c8ff); }
+  .mini.noir { background:#0b0b0d; }
+
+  /* Vista previa de la tira (proporción 600:1800) */
+  .tira { width:200px; aspect-ratio:600/1800; margin:0 auto 26px; padding:12px;
+          display:flex; flex-direction:column; border-radius:10px;
+          box-shadow:var(--sombra); }
+  .tira-cabeza { height:26px; display:flex; align-items:center; justify-content:space-between;
+                 font-size:8px; font-weight:800; letter-spacing:.14em; }
+  .tira-fotos { flex:1; display:flex; flex-direction:column; gap:9px; margin:8px 0; }
+  .tira-fotos img { flex:1; width:100%; min-height:0; object-fit:cover; border-radius:4px;
+                   background:#ddd; display:block; }
+  .tira-pie { height:30px; display:flex; align-items:center; justify-content:center;
+              font-size:9px; font-weight:800; letter-spacing:.22em; }
+  .tira.retro { background:#f5eedd; color:#2b2118; }
+  .tira.clasico { background:#fff; color:#9a9a9a; }
+  .tira.pastel { background:linear-gradient(170deg,#ffd6e8,#d9c8ff); color:#fff; }
+  .tira.noir { background:#0b0b0d; color:#7dff9a; }
+  .tira.noir .rec { color:#ff3b3b; }
+
+  /* Individuales */
+  .foto { margin-bottom:40px; }
+  .foto img { width:100%; max-width:520px; border-radius:20px; display:block;
+              margin:0 auto 18px; box-shadow:var(--sombra); background:#fff; }
+
+  footer { font-size:12px; font-weight:700; letter-spacing:.24em; text-transform:uppercase;
+           color:var(--tinta-suave); margin-top:34px; }
 </style>
 </head>
 <body>
 <script src="./fondo.js"></script>
 <div class="contenido">
-  <h1 class="neon">Tus<br>fotografías</h1>
-  <div class="sub-neon" id="sub">Guárdalas antes de<br>cerrar esta página</div>
-  <div id="gal"></div>
+  <span class="pastilla pastilla-rosa">Tu sesión</span>
+  <h1 class="titular gal-titulo">Tus <span class="degradado-texto">fotografías</span></h1>
+  <p class="gal-sub" id="sub">Elige cómo llevártelas</p>
+
+  <div id="opciones" class="oculto">
+    <div class="tabs">
+      <button class="tab sel" id="tab-tira">Tira</button>
+      <button class="tab" id="tab-ind">Individuales</button>
+    </div>
+
+    <div id="vista-tira">
+      <div class="marcos" id="marcos">
+        <button class="marco sel" data-marco="retro"><span class="mini retro"></span>Retro</button>
+        <button class="marco" data-marco="clasico"><span class="mini clasico"></span>Clásico</button>
+        <button class="marco" data-marco="pastel"><span class="mini pastel"></span>Pastel</button>
+        <button class="marco" data-marco="noir"><span class="mini noir"></span>Noir</button>
+      </div>
+      <div class="tira retro" id="tira">
+        <div class="tira-cabeza"><span id="tira-cabeza-izq">PHOTO BOOTH</span><span id="tira-cabeza-der">RETRO · 2026</span></div>
+        <div class="tira-fotos" id="tira-fotos"></div>
+        <div class="tira-pie" id="tira-pie">✦ MEMORIES ✦</div>
+      </div>
+      <button class="btn-negro" id="descargar-tira">Descargar tira (PNG)</button>
+    </div>
+
+    <div id="vista-ind" class="oculto">
+      <div id="gal"></div>
+    </div>
+  </div>
+
   <footer>Gracias por venir</footer>
 </div>
+
 <script>
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
 const fotos = new URLSearchParams(location.search).getAll("f").filter(u => u.startsWith("https://"));
-const gal = document.getElementById("gal");
+const $ = id => document.getElementById(id);
+
+// Marcos disponibles para la tira
+const MARCOS = {
+  retro:   { cabeza:["PHOTO BOOTH","RETRO · 2026"], pie:"✦ MEMORIES ✦", fondo:"#f5eedd", tinta:"#2b2118", fuente:800 },
+  clasico: { cabeza:["FLASHBOX SEOUL","CLASSIC MINIMAL"], pie:"", fondo:"#ffffff", tinta:"#9a9a9a", fuente:800 },
+  pastel:  { cabeza:["PASTEL DREAM",""], pie:"cutie", fondo:null, degradado:["#ffd6e8","#d9c8ff"], tinta:"#ffffff", fuente:800 },
+  noir:    { cabeza:["[RAW_03]",'<span class="rec">● REC</span>'], pie:"CYBER NOIR", fondo:"#0b0b0d", tinta:"#7dff9a", fuente:800, rec:"#ff3b3b" }
+};
+let marcoActual = "retro";
+
 if (!fotos.length){
-  document.getElementById("sub").innerHTML =
-    "Esta galería necesita un link con fotos.<br><br>" +
-    "Escanea el QR del Photo Booth para ver las tuyas.";
+  $("sub").innerHTML = "Esta galería necesita un link con fotos.<br>Escanea el QR del Photo Booth para ver las tuyas.";
 } else {
-  gal.innerHTML = fotos.map((f,i) => {
-    // En Cloudinary, fl_attachment fuerza la descarga con buen nombre de archivo
+  $("opciones").classList.remove("oculto");
+
+  // Vista previa de la tira
+  $("tira-fotos").innerHTML = fotos.map((f,i) =>
+    `<img src="${esc(f)}" alt="Fotografía ${i+1}" loading="lazy">`).join("");
+
+  // Individuales (fl_attachment fuerza la descarga con buen nombre)
+  $("gal").innerHTML = fotos.map((f,i) => {
     const dl = f.replace("/image/upload/", "/image/upload/fl_attachment:photo-booth-" + (i+1) + "/");
     return `<div class="foto"><img src="${esc(f)}" alt="Fotografía ${i+1}" loading="lazy"><br>` +
-      `<a class="btn-neon" href="${esc(dl)}" download="photo-booth-${i+1}.jpg">Descargar</a></div>`;
+      `<a class="btn-linea" href="${esc(dl)}" download="photo-booth-${i+1}.jpg">Descargar</a></div>`;
   }).join("");
+
+  // Pestañas
+  const mostrarModo = modo => {
+    $("vista-tira").classList.toggle("oculto", modo !== "tira");
+    $("vista-ind").classList.toggle("oculto", modo !== "ind");
+    $("tab-tira").classList.toggle("sel", modo === "tira");
+    $("tab-ind").classList.toggle("sel", modo === "ind");
+  };
+  $("tab-tira").onclick = () => mostrarModo("tira");
+  $("tab-ind").onclick = () => mostrarModo("ind");
+
+  // Cambio de marco
+  $("marcos").addEventListener("click", e => {
+    const b = e.target.closest(".marco");
+    if (!b) return;
+    marcoActual = b.dataset.marco;
+    document.querySelectorAll(".marco").forEach(m => m.classList.toggle("sel", m === b));
+    const tira = $("tira");
+    tira.className = "tira " + marcoActual;
+    const M = MARCOS[marcoActual];
+    $("tira-cabeza-izq").textContent = M.cabeza[0];
+    $("tira-cabeza-der").innerHTML = esc(M.cabeza[1]);
+    $("tira-pie").textContent = M.pie;
+  });
+
+  $("descargar-tira").onclick = descargarTira;
+}
+
+function cargar(url){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+function dibujarCover(x, img, dx, dy, dw, dh){
+  const s = Math.max(dw / img.width, dh / img.height);
+  const w = img.width * s, h = img.height * s;
+  x.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
+}
+
+async function descargarTira(){
+  const btn = $("descargar-tira");
+  btn.textContent = "Generando…";
+  btn.disabled = true;
+  try {
+    await document.fonts.ready;
+    const M = MARCOS[marcoActual];
+    const W = 600, H = 1800, pad = 36, cabezaH = 76, pieH = 96, gap = 26;
+    const fw = W - pad * 2;
+    const fh = (H - pad * 2 - cabezaH - pieH - gap * 2) / fotos.length;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+
+    // Fondo
+    if (M.degradado){
+      const g = x.createLinearGradient(0, 0, W * 0.3, H);
+      g.addColorStop(0, M.degradado[0]); g.addColorStop(1, M.degradado[1]);
+      x.fillStyle = g;
+    } else {
+      x.fillStyle = M.fondo;
+    }
+    x.fillRect(0, 0, W, H);
+
+    // Fotos
+    const imgs = await Promise.all(fotos.map(cargar));
+    imgs.forEach((img, i) => dibujarCover(x, img, pad, pad + cabezaH + i * (fh + gap), fw, fh));
+
+    // Textos
+    x.fillStyle = M.tinta;
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    x.font = "800 24px Montserrat, Arial, sans-serif";
+    x.fillText(M.cabeza[0], W / 2, pad + cabezaH / 2 - 12);
+    x.font = "700 20px Montserrat, Arial, sans-serif";
+    if (marcoActual === "noir"){
+      x.fillStyle = M.rec;
+      x.fillText("● REC", W / 2, pad + cabezaH / 2 + 16);
+      x.fillStyle = M.tinta;
+    } else {
+      x.fillText(M.cabeza[1], W / 2, pad + cabezaH / 2 + 16);
+    }
+    if (M.pie){
+      x.font = "800 26px Montserrat, Arial, sans-serif";
+      x.fillStyle = M.tinta;
+      x.fillText(M.pie, W / 2, H - pad - pieH / 2);
+    }
+
+    const blob = await new Promise(r => c.toBlob(r, "image/png"));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "tira-photo-booth.png";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  } catch(e){
+    alert("No se pudo generar la tira. Prueba con las fotos individuales.");
+  }
+  btn.textContent = "Descargar tira (PNG)";
+  btn.disabled = false;
 }
 </script>
 </body>
