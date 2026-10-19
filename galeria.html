@@ -101,20 +101,20 @@
   <footer>Gracias por venir</footer>
 </div>
 <script>
-const s = new URLSearchParams(location.search).get("s");
-let fotos = [];
-try { fotos = JSON.parse(localStorage.getItem("booth-" + s) || "[]"); } catch(e){}
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+const fotos = new URLSearchParams(location.search).getAll("f").filter(u => u.startsWith("https://"));
 const gal = document.getElementById("gal");
 if (!fotos.length){
   document.getElementById("sub").innerHTML =
-    "Demo: las fotos solo existen en el teléfono que las tomó.<br><br>" +
-    "En la versión del evento, esta galería es un link público<br>" +
-    "que cada invitado abre en su propio teléfono.";
+    "Esta galería necesita un link con fotos.<br><br>" +
+    "Escanea el QR del Photo Booth para ver las tuyas.";
 } else {
-  gal.innerHTML = fotos.map((f,i) =>
-    `<div class="foto"><img src="${f}" alt="Fotografía ${i+1}"><br>` +
-    `<a class="btn-neon" href="${f}" download="photo-booth-${i+1}.jpg">Descargar</a></div>`
-  ).join("");
+  gal.innerHTML = fotos.map((f,i) => {
+    // En Cloudinary, fl_attachment fuerza la descarga con buen nombre de archivo
+    const dl = f.replace("/image/upload/", "/image/upload/fl_attachment:photo-booth-" + (i+1) + "/");
+    return `<div class="foto"><img src="${esc(f)}" alt="Fotografía ${i+1}" loading="lazy"><br>` +
+      `<a class="btn-neon" href="${esc(dl)}" download="photo-booth-${i+1}.jpg">Descargar</a></div>`;
+  }).join("");
 }
 </script>
 </body>
