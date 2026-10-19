@@ -5,95 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#04050c">
 <title>Tus fotografías — Photo Booth</title>
+<link rel="stylesheet" href="./estilos.css">
 <style>
-  :root{
-    --navy:#04050c; --ice:#eef8ff; --cyan:#4de3ff; --pink:#ff2fb3;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--navy); color:var(--ice); text-align:center;
-         font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;
-         padding:60px 20px 90px; -webkit-font-smoothing:antialiased; }
-  /* ===== Fondo neón: franjas en zigzag (estático: se pinta una sola vez) ===== */
-  .fondo-neon { position:fixed; inset:0; width:100%; height:100%;
-                z-index:0; pointer-events:none; }
-  .luz-ambiente { position:fixed; inset:0; z-index:0; pointer-events:none; }
-  .luz-ambiente.a { background:radial-gradient(60% 45% at 18% 12%, rgba(255,47,179,.20), transparent 70%); }
-  .luz-ambiente.b { background:radial-gradient(65% 50% at 85% 88%, rgba(59,130,246,.20), transparent 70%); }
-  .luz-ambiente.c { background:radial-gradient(50% 40% at 80% 15%, rgba(0,229,160,.12), transparent 70%); }
-  .velo { position:fixed; inset:0; z-index:1; pointer-events:none;
-          background:radial-gradient(ellipse at 50% 30%, transparent 20%, rgba(2,3,8,.78) 100%); }
+  /* Estilos propios de la galería — el tema vive en estilos.css */
+  body { padding:60px 20px 90px; }
+
   .contenido { position:relative; z-index:2; }
-  .neon { font-weight:700; text-transform:uppercase; color:#f4fbff;
-          -webkit-text-stroke:1.5px rgba(238,248,255,.92);
-          text-shadow:0 0 6px rgba(125,211,252,.95),
-                      0 0 22px rgba(56,189,248,.8),
-                      0 0 64px rgba(14,165,233,.55); }
-  h1 { font-size:clamp(36px,9vw,58px); letter-spacing:.06em; line-height:1.1; margin-bottom:16px; }
-  .sub-neon { font-size:14px; letter-spacing:.3em; text-transform:uppercase; color:#bfe9ff;
-              text-shadow:0 0 12px rgba(77,227,255,.7); margin-bottom:52px; line-height:2; }
-  .foto { margin-bottom:56px; }
-  .foto img { width:100%; max-width:460px; border-radius:16px; display:block;
-              margin:0 auto 22px;
-              box-shadow:0 0 16px rgba(77,227,255,.35), 0 24px 60px rgba(0,0,0,.6); }
-  .btn-neon { display:inline-block; text-decoration:none; font-weight:700; font-size:13px;
-              letter-spacing:.3em; text-transform:uppercase; color:var(--ice);
-              padding:16px 42px 16px calc(42px + .3em); border-radius:999px;
-              border:2px solid rgba(77,227,255,.9); background:rgba(77,227,255,.07);
-              box-shadow:0 0 14px rgba(77,227,255,.55),
-                         inset 0 0 14px rgba(77,227,255,.22);
-              text-shadow:0 0 10px rgba(125,211,252,.9); }
-  .btn-neon:active { background:rgba(77,227,255,.22); }
-  footer { margin-top:24px; font-size:12px; letter-spacing:.34em; text-transform:uppercase;
-           color:#9fd8f5; text-shadow:0 0 10px rgba(77,227,255,.6); }
+  h1 { font-size:clamp(38px,9vw,64px); letter-spacing:.06em; margin-bottom:8px; }
+  .sub-neon { font-size:14px; letter-spacing:.3em; margin-bottom:52px; line-height:2; }
+  .foto { margin-bottom:44px; }
+  .foto img { width:100%; max-width:560px; border-radius:18px; display:block;
+              margin:0 auto 18px;
+              box-shadow:0 0 22px rgba(77,227,255,.35), 0 0 70px rgba(255,47,179,.18); }
+  .btn-neon { font-size:13px; letter-spacing:.3em;
+              padding:16px 42px 16px calc(42px + .3em); }
+  footer { font-size:12px; letter-spacing:.24em; text-transform:uppercase;
+           color:#8fa3bd; margin-top:20px; }
 </style>
 </head>
 <body>
-<svg class="fondo-neon" viewBox="0 0 100 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <defs>
-    <path id="ch" d="M-15 26 L50 0 L115 26" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path id="hz" d="M-30 0 L120 -72" fill="none" stroke-linecap="round"/>
-  </defs>
-  <g stroke-width="5" opacity="0.30">
-    <use href="#ch" transform="translate(0,167)" stroke="#ff2fb3"/>
-    <use href="#ch" transform="translate(0,142)" stroke="#3b82f6"/>
-    <use href="#ch" transform="translate(0,117)" stroke="#00e5a0"/>
-    <use href="#ch" transform="translate(0,92)" stroke="#8b5cf6"/>
-    <use href="#ch" transform="translate(0,67)" stroke="#ff2fb3"/>
-    <use href="#ch" transform="translate(0,42)" stroke="#3b82f6"/>
-    <use href="#ch" transform="translate(0,17)" stroke="#00e5a0"/>
-    <use href="#ch" transform="translate(0,-8)" stroke="#8b5cf6"/>
-    <use href="#hz" transform="translate(0,96)" stroke="#4de3ff" opacity="0.55"/>
-    <use href="#hz" transform="translate(0,152)" stroke="#ff2fb3" opacity="0.5"/>
-  </g>
-  <g stroke-width="1.7" opacity="0.8">
-    <use href="#ch" transform="translate(0,167)" stroke="#ff2fb3"/>
-    <use href="#ch" transform="translate(0,142)" stroke="#3b82f6"/>
-    <use href="#ch" transform="translate(0,117)" stroke="#00e5a0"/>
-    <use href="#ch" transform="translate(0,92)" stroke="#8b5cf6"/>
-    <use href="#ch" transform="translate(0,67)" stroke="#ff2fb3"/>
-    <use href="#ch" transform="translate(0,42)" stroke="#3b82f6"/>
-    <use href="#ch" transform="translate(0,17)" stroke="#00e5a0"/>
-    <use href="#ch" transform="translate(0,-8)" stroke="#8b5cf6"/>
-    <use href="#hz" transform="translate(0,96)" stroke="#4de3ff" opacity="0.6"/>
-    <use href="#hz" transform="translate(0,152)" stroke="#ff2fb3" opacity="0.55"/>
-  </g>
-  <g stroke-width="0.7" opacity="0.95">
-    <use href="#ch" transform="translate(0,167)" stroke="#ffd7ef"/>
-    <use href="#ch" transform="translate(0,142)" stroke="#cfe4ff"/>
-    <use href="#ch" transform="translate(0,117)" stroke="#d2fcec"/>
-    <use href="#ch" transform="translate(0,92)" stroke="#ddd0ff"/>
-    <use href="#ch" transform="translate(0,67)" stroke="#ffd7ef"/>
-    <use href="#ch" transform="translate(0,42)" stroke="#cfe4ff"/>
-    <use href="#ch" transform="translate(0,17)" stroke="#d2fcec"/>
-    <use href="#ch" transform="translate(0,-8)" stroke="#ddd0ff"/>
-    <use href="#hz" transform="translate(0,96)" stroke="#d9f9ff" opacity="0.7"/>
-    <use href="#hz" transform="translate(0,152)" stroke="#ffd7ef" opacity="0.65"/>
-  </g>
-</svg>
-<div class="luz-ambiente a"></div>
-<div class="luz-ambiente b"></div>
-<div class="luz-ambiente c"></div>
-<div class="velo"></div>
+<script src="./fondo.js"></script>
 <div class="contenido">
   <h1 class="neon">Tus<br>fotografías</h1>
   <div class="sub-neon" id="sub">Guárdalas antes de<br>cerrar esta página</div>

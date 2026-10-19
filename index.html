@@ -8,43 +8,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#04050c">
 <title>Photo Booth</title>
+<link rel="stylesheet" href="./estilos.css">
 <style>
-  :root{
-    --navy:#04050c;
-    --ice:#eef8ff;
-    --cyan:#4de3ff;
-    --pink:#ff2fb3;
-    --blue:#3b82f6;
-    --teal:#00e5a0;
-    --violet:#8b5cf6;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html, body { height:100%; overflow:hidden; }
-  body { background:var(--navy); color:var(--ice); text-align:center;
-         font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;
-         -webkit-font-smoothing:antialiased; }
-
-  /* ===== Fondo neón: franjas en zigzag (estático: se pinta una sola vez) ===== */
-  .fondo-neon { position:fixed; inset:0; width:100%; height:100%;
-                z-index:0; pointer-events:none; }
-  .luz-ambiente { position:fixed; inset:0; z-index:0; pointer-events:none; }
-  .luz-ambiente.a { background:radial-gradient(60% 45% at 18% 12%, rgba(255,47,179,.20), transparent 70%); }
-  .luz-ambiente.b { background:radial-gradient(65% 50% at 85% 88%, rgba(59,130,246,.20), transparent 70%); }
-  .luz-ambiente.c { background:radial-gradient(50% 40% at 80% 15%, rgba(0,229,160,.12), transparent 70%); }
-  .velo { position:fixed; inset:0; z-index:1; pointer-events:none;
-          background:radial-gradient(ellipse at 50% 42%, transparent 25%, rgba(2,3,8,.72) 100%); }
-
-  /* ===== Texto tubo de neón ===== */
-  .neon { font-weight:700; text-transform:uppercase; color:#f4fbff;
-          -webkit-text-stroke:1.5px rgba(238,248,255,.92);
-          text-shadow:0 0 6px rgba(125,211,252,.95),
-                      0 0 22px rgba(56,189,248,.8),
-                      0 0 64px rgba(14,165,233,.55); }
-  .neon-rosa { font-weight:700; text-transform:uppercase; color:#fff5fb;
-          -webkit-text-stroke:1.5px rgba(255,240,250,.92);
-          text-shadow:0 0 6px rgba(255,120,200,.95),
-                      0 0 22px rgba(255,47,179,.8),
-                      0 0 64px rgba(255,47,179,.55); }
+  /* Estilos propios de la app — el tema vive en estilos.css */
+  html, body { overflow:hidden; }
 
   #pantalla { position:fixed; inset:0; z-index:2; display:flex;
               align-items:center; justify-content:center; }
@@ -94,67 +61,14 @@
            margin:0 auto 26px;
            box-shadow:0 0 18px rgba(77,227,255,.75), 0 0 60px rgba(255,47,179,.35); }
   #qrbox img, #qrbox canvas, #qrbox table { display:block; }
-  .sub-neon { font-size:15px; letter-spacing:.28em; text-transform:uppercase;
-              color:#bfe9ff; text-shadow:0 0 12px rgba(77,227,255,.7); margin-bottom:34px; }
-  .btn-neon { font-family:inherit; font-weight:700; font-size:14px; letter-spacing:.3em;
-              text-transform:uppercase; color:var(--ice); cursor:pointer;
-              padding:18px 46px 18px calc(46px + .3em); border-radius:999px;
-              border:2px solid rgba(77,227,255,.9); background:rgba(77,227,255,.07);
-              box-shadow:0 0 14px rgba(77,227,255,.55),
-                         inset 0 0 14px rgba(77,227,255,.22);
-              text-shadow:0 0 10px rgba(125,211,252,.9); }
-  .btn-neon:active { background:rgba(77,227,255,.22); }
-  .oculto { display:none !important; }
+  .sub-neon { font-size:15px; letter-spacing:.28em; margin-bottom:34px; }
+  .btn-neon { font-size:14px; letter-spacing:.3em;
+              padding:18px 46px 18px calc(46px + .3em); }
 </style>
 </head>
 <body>
 
-<svg class="fondo-neon" viewBox="0 0 100 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <defs>
-    <path id="ch" d="M-15 26 L50 0 L115 26" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path id="hz" d="M-30 0 L120 -72" fill="none" stroke-linecap="round"/>
-  </defs>
-  <g stroke-width="5" opacity="0.30">
-    <use href="#ch" transform="translate(0,167)" stroke="#ff2fb3"/>
-    <use href="#ch" transform="translate(0,142)" stroke="#3b82f6"/>
-    <use href="#ch" transform="translate(0,117)" stroke="#00e5a0"/>
-    <use href="#ch" transform="translate(0,92)" stroke="#8b5cf6"/>
-    <use href="#ch" transform="translate(0,67)" stroke="#ff2fb3"/>
-    <use href="#ch" transform="translate(0,42)" stroke="#3b82f6"/>
-    <use href="#ch" transform="translate(0,17)" stroke="#00e5a0"/>
-    <use href="#ch" transform="translate(0,-8)" stroke="#8b5cf6"/>
-    <use href="#hz" transform="translate(0,96)" stroke="#4de3ff" opacity="0.55"/>
-    <use href="#hz" transform="translate(0,152)" stroke="#ff2fb3" opacity="0.5"/>
-  </g>
-  <g stroke-width="1.7" opacity="0.8">
-    <use href="#ch" transform="translate(0,167)" stroke="#ff2fb3"/>
-    <use href="#ch" transform="translate(0,142)" stroke="#3b82f6"/>
-    <use href="#ch" transform="translate(0,117)" stroke="#00e5a0"/>
-    <use href="#ch" transform="translate(0,92)" stroke="#8b5cf6"/>
-    <use href="#ch" transform="translate(0,67)" stroke="#ff2fb3"/>
-    <use href="#ch" transform="translate(0,42)" stroke="#3b82f6"/>
-    <use href="#ch" transform="translate(0,17)" stroke="#00e5a0"/>
-    <use href="#ch" transform="translate(0,-8)" stroke="#8b5cf6"/>
-    <use href="#hz" transform="translate(0,96)" stroke="#4de3ff" opacity="0.6"/>
-    <use href="#hz" transform="translate(0,152)" stroke="#ff2fb3" opacity="0.55"/>
-  </g>
-  <g stroke-width="0.7" opacity="0.95">
-    <use href="#ch" transform="translate(0,167)" stroke="#ffd7ef"/>
-    <use href="#ch" transform="translate(0,142)" stroke="#cfe4ff"/>
-    <use href="#ch" transform="translate(0,117)" stroke="#d2fcec"/>
-    <use href="#ch" transform="translate(0,92)" stroke="#ddd0ff"/>
-    <use href="#ch" transform="translate(0,67)" stroke="#ffd7ef"/>
-    <use href="#ch" transform="translate(0,42)" stroke="#cfe4ff"/>
-    <use href="#ch" transform="translate(0,17)" stroke="#d2fcec"/>
-    <use href="#ch" transform="translate(0,-8)" stroke="#ddd0ff"/>
-    <use href="#hz" transform="translate(0,96)" stroke="#d9f9ff" opacity="0.7"/>
-    <use href="#hz" transform="translate(0,152)" stroke="#ffd7ef" opacity="0.65"/>
-  </g>
-</svg>
-<div class="luz-ambiente a"></div>
-<div class="luz-ambiente b"></div>
-<div class="luz-ambiente c"></div>
-<div class="velo"></div>
+<script src="./fondo.js"></script>
 
 <div id="pantalla">
   <div id="vista-inicio" role="button" aria-label="Toca para comenzar">
