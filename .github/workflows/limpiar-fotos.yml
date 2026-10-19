@@ -1,0 +1,59 @@
+name: Borrar fotos con más de 24 horas
+
+on:
+  schedule:
+    - cron: "0 8 * * *"   # 2:00 AM hora de Utah
+  workflow_dispatch:       # permite correrlo a mano desde la pestaña Actions
+
+jobs:
+  limpiar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Borrar fotos viejas de Cloudinary
+        env:
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        run: |
+          python3 - <<'EOF'
+          import base64, datetime, json, os, urllib.request
+
+          cloud = os.environ.get("CLOUDINARY_CLOUD_NAME", "")
+          key = os.environ.get("CLOUDINARY_API_KEY", "")
+          secret = os.environ.get("CLOUDINARY_API_SECRET", "")
+          if not (cloud and key and secret):
+              print("Faltan los secrets de Cloudinary, no se hace nada.")
+              raise SystemExit(0)
+
+          auth = base64.b64encode(f"{key}:{secret}".encode()).decode()
+
+          def api(method, path, data=None):
+              body = json.dumps(data).encode() if data is not None else None
+              req = urllib.request.Request(
+                  f"https://api.cloudinary.com/v1_1/{cloud}{path}",
+                  data=body, method=method,
+                  headers={"Content-Type": "application/json",
+                           "Authorization": "Basic " + auth})
+              with urllib.request.urlopen(req) as r:
+                  return json.load(r)
+
+          limite = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=24)
+          viejas, cursor = [], None
+          while True:
+              q = "/resources/image/upload?prefix=photo-booth/&max_results=500"
+              if cursor:
+                  q += "&next_cursor=" + cursor
+              res = api("GET", q)
+              for r in res.get("resources", []):
+                  creada = datetime.datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
+                  if creada < limite:
+                      viejas.append(r["public_id"])
+              cursor = res.get("next_cursor")
+              if not cursor:
+                  break
+
+          for i in range(0, len(viejas), 100):
+              api("DELETE", "/resources/image/upload", {"public_ids": viejas[i:i+100]})
+
+          print(f"Listo: {len(viejas)} fotos de mas de 24h borradas.")
+          EOF
