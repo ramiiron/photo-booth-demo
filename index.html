@@ -30,7 +30,7 @@
 
   /* ===== Cámara: HUD oscuro de estudio ===== */
   #preview { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
-             transform:scaleX(-1); z-index:2; background:#000; }
+             transform:scaleX(-1) scale(1.25); z-index:2; background:#000; }
   .hud-arriba { position:fixed; top:0; left:0; right:0; z-index:4;
                 display:flex; justify-content:space-between; align-items:center;
                 padding:22px 22px 46px;
@@ -139,7 +139,7 @@ function pintarPuntos(n){
 $("vista-inicio").onclick = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
+      video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1440 } },
       audio: false
     });
     video.srcObject = stream;
@@ -152,16 +152,23 @@ $("vista-inicio").onclick = async () => {
 
 function capturar(){
   const c = document.createElement("canvas");
-  const s = Math.min(1, 960 / video.videoWidth);
-  c.width = Math.round(video.videoWidth * s);
-  c.height = Math.round(video.videoHeight * s);
+  // Recorte central del 10% por lado: elimina las orillas, que es donde
+  // el gran angular de la cámara frontal más distorsiona (efecto ojo de pez)
+  const r = 0.10;
+  const sw = video.videoWidth * (1 - r*2);
+  const sh = video.videoHeight * (1 - r*2);
+  const sx = video.videoWidth * r;
+  const sy = video.videoHeight * r;
+  const s = Math.min(1, 1600 / sw);
+  c.width = Math.round(sw * s);
+  c.height = Math.round(sh * s);
   const ctx = c.getContext("2d");
-  ctx.translate(c.width, 0); ctx.scale(-1, 1);
-  ctx.drawImage(video, 0, 0, c.width, c.height);
+  ctx.translate(c.width, 0); ctx.scale(-1, 1); // espejo
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
   const f = $("flash");
   f.style.transition = "none"; f.style.opacity = "0.9";
   requestAnimationFrame(() => { f.style.transition = "opacity .45s"; f.style.opacity = "0"; });
-  return c.toDataURL("image/jpeg", 0.85);
+  return c.toDataURL("image/jpeg", 0.9);
 }
 
 async function cuentaRegresiva(segundos){
