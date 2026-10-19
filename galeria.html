@@ -172,7 +172,7 @@ if (!fotos.length){
     tira.className = "tira " + marcoActual;
     const M = MARCOS[marcoActual];
     $("tira-cabeza-izq").textContent = M.cabeza[0];
-    $("tira-cabeza-der").innerHTML = esc(M.cabeza[1]);
+    $("tira-cabeza-der").innerHTML = M.cabeza[1]; // HTML propio (no es input del usuario)
     $("tira-pie").textContent = evNombre || M.pie;
   });
 
