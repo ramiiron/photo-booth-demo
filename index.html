@@ -239,6 +239,7 @@ async function subirFoto(blob, i){
   const fd = new FormData();
   fd.append("file", blob, "photo-booth-" + Date.now() + "-" + (i+1) + ".jpg");
   fd.append("upload_preset", UPLOAD_PRESET);
+  fd.append("folder", "photo-booth");
   const r = await fetch("https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload",
                         { method:"POST", body:fd });
   if (!r.ok) throw new Error("HTTP " + r.status);
