@@ -50,7 +50,7 @@ body { background:var(--crema); color:var(--tinta); text-align:center;
 /* ----- Botones ----- */
 .btn-negro { display:inline-block; text-decoration:none; font-family:inherit;
              font-weight:800; font-size:15px; letter-spacing:.12em;
-             text-transform:uppercase; color:#fff; background:var(--tinta);
+             text-transform:uppercase; color:#fff; background:#161616;
              padding:18px 44px 18px calc(44px + .12em); border:none;
              border-radius:999px; cursor:pointer;
              box-shadow:0 14px 30px rgba(22,22,22,.28); }
