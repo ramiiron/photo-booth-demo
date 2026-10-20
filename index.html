@@ -259,7 +259,7 @@
     <div id="disenos-grid"></div>
   </div>
 
-  <div id="vista-inicio" class="oculto" role="button" aria-label="Tap to start">
+  <div id="vista-inicio" class="oculto">
     <button id="btn-home" aria-label="Designs">
       <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M3 11.2 12 3l9 8.2v9.3a1.5 1.5 0 0 1-1.5 1.5H14v-6h-4v6H4.5A1.5 1.5 0 0 1 3 20.5Z" fill="currentColor"/></svg>
     </button>
@@ -298,7 +298,7 @@
       <h1 class="titular inicio-titulo" data-txt="titulo">Capture your moment<br><span class="degradado-texto">in 3 photos</span></h1>
       <p class="inicio-sub" data-txt="sub">5-second countdown · Strip ready to download</p>
       <p class="inicio-evento oculto" id="inicio-evento"></p>
-      <span class="btn-negro" data-txt="empezar">Start →</span>
+      <span class="btn-negro" id="btn-start" role="button" data-txt="empezar">Start →</span>
     </div>
   </div>
 
@@ -507,7 +507,8 @@ function resetCorte(){
 }
 
 let iniciando = false;
-$("vista-inicio").onclick = async () => {
+// ONLY the Start button opens the camera (tapping elsewhere does nothing)
+$("btn-start").onclick = async () => {
   if (iniciando) return;
   iniciando = true;
   const esHalloween = EVENTO.plantilla === "halloween";
