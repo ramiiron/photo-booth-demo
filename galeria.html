@@ -71,6 +71,10 @@
   .foto img { width:100%; max-width:520px; border-radius:30px; display:block;
               margin:0 auto 18px; box-shadow:var(--sombra); background:#fff; }
 
+  /* Boomerang */
+  #boom-video { width:100%; max-width:520px; border-radius:30px; display:block;
+                margin:0 auto 22px; box-shadow:var(--sombra); background:#000; }
+
   footer { font-size:12px; font-weight:700; letter-spacing:.24em; text-transform:uppercase;
            color:var(--tinta-suave); margin-top:34px; }
   .priv-nota { font-size:12px; font-weight:500; color:var(--tinta-suave);
@@ -117,6 +121,11 @@
     <div id="vista-ind" class="oculto">
       <div id="gal"></div>
     </div>
+
+    <div id="vista-boomerang" class="oculto">
+      <video id="boom-video" autoplay loop muted playsinline></video><br>
+      <button class="btn-negro" id="descargar-boomerang">Download boomerang</button>
+    </div>
   </div>
 
   <footer>Thanks for coming</footer>
@@ -127,6 +136,7 @@
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
 const qs = new URLSearchParams(location.search);
 const fotos = qs.getAll("f").filter(u => u.startsWith("https://"));
+const videoUrl = (qs.get("v") || "").startsWith("https://") ? qs.get("v") : "";
 const $ = id => document.getElementById(id);
 
 // Per-event customization (comes in the QR from the booth config)
@@ -166,6 +176,30 @@ const FILTROS = {
   vivido:   "saturate(1.7) contrast(1.12)",
 };
 let filtroActual = "original";
+async function compartirVideo(btn){
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Opening…";
+  try {
+    const blob = await (await fetch(videoUrl)).blob();
+    const ext = blob.type.includes("mp4") ? "mp4" : "webm";
+    const file = new File([blob], "pose-post-boomerang." + ext, { type: blob.type || "video/mp4" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      try {
+        await navigator.share({ files: [file], title: "Photo Booth" });
+      } catch(e){
+        if (!e || e.name !== "AbortError") descargarBlob(blob, file.name);
+      }
+    } else {
+      descargarBlob(blob, file.name);
+    }
+  } catch(e){
+    alert("Couldn't prepare the video. Try again.");
+  }
+  btn.textContent = orig;
+  btn.disabled = false;
+}
+
 function fijarFiltro(nombre){
   filtroActual = FILTROS[nombre] ? nombre : "original";
   document.querySelectorAll(".filtro-g").forEach(c => c.classList.toggle("sel", c.dataset.filtro === filtroActual));
@@ -173,8 +207,19 @@ function fijarFiltro(nombre){
 }
 document.querySelectorAll(".filtro-g").forEach(b => { b.onclick = () => fijarFiltro(b.dataset.filtro); });
 
-if (!fotos.length){
+if (!fotos.length && !videoUrl){
   $("sub").innerHTML = "This gallery needs a link with photos.<br>Scan the Photo Booth QR code to see yours.";
+} else if (videoUrl){
+  // Boomerang session: just the looping clip + download/share
+  $("sub").textContent = "Your boomerang is ready";
+  $("opciones").classList.remove("oculto");
+  document.querySelector(".tabs").classList.add("oculto");
+  $("filtros").classList.add("oculto");
+  $("vista-tira").classList.add("oculto");
+  $("vista-ind").classList.add("oculto");
+  $("vista-boomerang").classList.remove("oculto");
+  $("boom-video").src = videoUrl;
+  $("descargar-boomerang").onclick = e => compartirVideo(e.target);
 } else {
   $("opciones").classList.remove("oculto");
 

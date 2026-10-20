@@ -65,6 +65,15 @@
                     box-shadow:0 0 12px rgba(244,63,142,.8); }
   #reintentar { position:fixed; bottom:120px; left:50%; transform:translateX(-50%); z-index:4; }
 
+  /* ===== Modes (Photos / Boomerang) ===== */
+  #modos { position:fixed; bottom:238px; left:0; right:0; z-index:4;
+           display:flex; gap:10px; justify-content:center; padding:10px 20px; }
+  .modo { font-family:inherit; font-size:12px; font-weight:800;
+          letter-spacing:.08em; text-transform:uppercase; color:#fff;
+          background:rgba(255,255,255,.14); border:1.5px solid rgba(255,255,255,.25);
+          padding:10px 20px; border-radius:999px; cursor:pointer; }
+  .modo.sel { background:#fff; color:#161616; border-color:#fff; }
+
   /* ===== Countdown ===== */
   #cuenta { position:fixed; inset:0; z-index:5; display:none; align-items:center;
             justify-content:center; font-size:clamp(140px,38vw,220px);
@@ -104,6 +113,10 @@
     </div>
     <div class="hud-abajo"></div>
     <div id="leyenda">Smile</div>
+    <div id="modos">
+      <button class="modo sel" data-modo="fotos">Photos</button>
+      <button class="modo" data-modo="boomerang">Boomerang</button>
+    </div>
     <button id="obturador" aria-label="Take photos"></button>
     <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
     <button id="reintentar" class="btn-degradado oculto">Retry upload</button>
@@ -173,7 +186,7 @@ $("vista-inicio").onclick = async () => {
   }
 };
 
-function capturar(){
+function capturarCanvas(anchoMax){
   const c = document.createElement("canvas");
   // 10% center crop per side: removes the edges, where the front
   // camera's wide angle distorts the most (fisheye effect)
@@ -182,16 +195,28 @@ function capturar(){
   const sh = video.videoHeight * (1 - r*2);
   const sx = video.videoWidth * r;
   const sy = video.videoHeight * r;
-  const s = Math.min(1, 1600 / sw);
+  const s = Math.min(1, anchoMax / sw);
   c.width = Math.round(sw * s);
   c.height = Math.round(sh * s);
   const ctx = c.getContext("2d");
   ctx.translate(c.width, 0); ctx.scale(-1, 1); // mirror
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  return c;
+}
+function capturar(){
+  const c = capturarCanvas(1600);
+  flashFuerte();
+  return c.toDataURL("image/jpeg", 0.9);
+}
+function flashFuerte(){
   const f = $("flash");
   f.style.transition = "none"; f.style.opacity = "0.9";
   requestAnimationFrame(() => { f.style.transition = "opacity .45s"; f.style.opacity = "0"; });
-  return c.toDataURL("image/jpeg", 0.9);
+}
+function flashSuave(){
+  const f = $("flash");
+  f.style.transition = "none"; f.style.opacity = "0.3";
+  requestAnimationFrame(() => { f.style.transition = "opacity .3s"; f.style.opacity = "0"; });
 }
 
 async function cuentaRegresiva(segundos){
@@ -236,9 +261,15 @@ async function subirYMostrarQR(fotos){
   }
 }
 
-$("obturador").onclick = async () => {
-  $("obturador").style.display = "none";
+// Session modes: Photos (3 shots) or Boomerang (burst -> looping clip)
+let modoActual = "fotos";
+document.querySelectorAll(".modo").forEach(b => { b.onclick = () => {
+  modoActual = b.dataset.modo;
+  document.querySelectorAll(".modo").forEach(x => x.classList.toggle("sel", x === b));
+  $("leyenda").textContent = modoActual === "boomerang" ? "Get ready to move" : "Smile";
+}; });
 
+async function sesionFotos(){
   const fotos = [];
   for (let i = 1; i <= 3; i++){
     $("leyenda").textContent = `Photo ${i} of 3 — get ready`;
@@ -246,11 +277,109 @@ $("obturador").onclick = async () => {
     fotos.push(capturar());
     pintarPuntos(i);
   }
-
   await subirYMostrarQR(fotos);
+}
 
+async function sesionBoomerang(){
+  $("leyenda").textContent = "Boomerang — get ready";
+  await cuentaRegresiva(3);
+  $("leyenda").textContent = "Move!";
+  const frames = [];
+  for (let i = 0; i < 14; i++){
+    frames.push(capturarCanvas(960));
+    flashSuave();
+    await esperar(90);
+  }
+  $("leyenda").textContent = "Creating your boomerang…";
+  const blob = await renderBoomerang(frames);
+  await subirYMostrarQRBoomerang(blob);
+}
+
+// Renders the burst as a ping-pong loop video (forward + backward)
+function renderBoomerang(frames){
+  return new Promise((res, rej) => {
+    const mime = ["video/mp4", "video/webm;codecs=vp9", "video/webm"]
+      .find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+    if (!mime){ rej(new Error("MediaRecorder not supported")); return; }
+    const w = frames[0].width, h = frames[0].height;
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const x = c.getContext("2d");
+    const seq = frames.concat(frames.slice(1, -1).reverse());
+    const rec = new MediaRecorder(c.captureStream(30), { mimeType: mime, videoBitsPerSecond: 5000000 });
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = () => res(new Blob(chunks, { type: mime.split(";")[0] }));
+    rec.onerror = rej;
+    rec.start();
+    seq.forEach((f, i) => setTimeout(() => {
+      x.drawImage(f, 0, 0);
+      if (NEGOCIO.nombre) marcaVideo(x, w, h);
+    }, i * 90));
+    setTimeout(() => rec.stop(), seq.length * 90 + 150);
+  });
+}
+
+// Business watermark baked into the boomerang video
+function marcaVideo(x, W, H){
+  const tam = Math.max(20, Math.round(W * 0.036));
+  const texto = "© " + NEGOCIO.nombre;
+  x.save();
+  x.font = "800 " + tam + "px Montserrat, Arial, sans-serif";
+  x.textAlign = "right";
+  x.textBaseline = "bottom";
+  x.lineJoin = "round";
+  x.lineWidth = Math.max(2, Math.round(tam * 0.22));
+  x.strokeStyle = "rgba(0,0,0,.8)";
+  const px = W - tam, py = H - Math.round(tam * 0.7);
+  x.strokeText(texto, px, py);
+  x.fillStyle = "#fff";
+  x.fillText(texto, px, py);
+  x.restore();
+}
+
+async function subirVideo(blob){
+  const fd = new FormData();
+  fd.append("file", blob, "boomerang-" + Date.now() + (blob.type.includes("mp4") ? ".mp4" : ".webm"));
+  fd.append("upload_preset", UPLOAD_PRESET);
+  fd.append("folder", "photo-booth");
+  const r = await fetch("https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/video/upload",
+                        { method:"POST", body:fd });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const j = await r.json();
+  if (!j.secure_url) throw new Error("sin url");
+  return j.secure_url;
+}
+
+async function subirYMostrarQRBoomerang(blob){
+  $("reintentar").classList.add("oculto");
+  try {
+    $("leyenda").textContent = "Uploading…";
+    const urlVideo = await subirVideo(blob);
+    const url = BASE + "/galeria.html?v=" + encodeURIComponent(urlVideo) +
+      "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
+      "&neg=" + encodeURIComponent(NEGOCIO.nombre);
+    $("qr").innerHTML = "";
+    new QRCode($("qr"), { text: url, width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
+    mostrar("vista-qr");
+  } catch(e){
+    $("leyenda").textContent = "Upload failed. Check your internet.";
+    $("reintentar").classList.remove("oculto");
+    $("reintentar").onclick = () => subirYMostrarQRBoomerang(blob);
+  }
+}
+
+$("obturador").onclick = async () => {
+  $("obturador").style.display = "none";
+  $("reintentar").classList.add("oculto");
+  try {
+    if (modoActual === "boomerang") await sesionBoomerang();
+    else await sesionFotos();
+  } catch(e){
+    $("leyenda").textContent = "Something went wrong. Try again.";
+  }
   pintarPuntos(0);
-  $("leyenda").textContent = "Smile";
+  $("leyenda").textContent = modoActual === "boomerang" ? "Get ready to move" : "Smile";
   $("obturador").style.display = "";
   $("reintentar").classList.add("oculto");
 };
