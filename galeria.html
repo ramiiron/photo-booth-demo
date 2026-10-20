@@ -79,6 +79,12 @@
            color:var(--tinta-suave); margin-top:34px; }
   .priv-nota { font-size:12px; font-weight:500; color:var(--tinta-suave);
                margin-top:10px; line-height:1.6; }
+  .cta-reserva { display:inline-block; margin-top:24px; font-size:13px; font-weight:800;
+                 letter-spacing:.14em; text-transform:uppercase; text-decoration:none;
+                 color:#fff; background:var(--degradado);
+                 padding:15px 28px; border-radius:999px;
+                 box-shadow:0 12px 30px rgba(244,63,142,.35); }
+  .cta-reserva:active { transform:scale(.97); }
 </style>
 </head>
 <body>
@@ -130,6 +136,7 @@
 
   <footer>Thanks for coming</footer>
   <p class="priv-nota">Photos are automatically deleted<br>24 hours after the event.</p>
+  <a class="cta-reserva oculto" id="cta-reserva" href="https://ramiiron.github.io/pose-and-post/" target="_blank" rel="noopener">Book Pose &amp; Post for your event</a>
 </div>
 
 <script>
@@ -267,6 +274,9 @@ if (!fotos.length && !videoUrl){
 
   $("descargar-tira").onclick = descargarTira;
 }
+
+// Booking CTA: only shown when the gallery actually has content
+if (fotos.length || videoUrl) $("cta-reserva").classList.remove("oculto");
 
 // Business watermark: small © name at the bottom-right of the canvas.
 // White text with a dark outline so it reads on any background.

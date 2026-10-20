@@ -119,7 +119,7 @@
     <div class="inicio-fondo" aria-hidden="true"></div>
     <div class="inicio-velo" aria-hidden="true"></div>
     <div class="inicio-contenido">
-      <span class="pastilla pastilla-rosa">Self-Studio</span>
+      <span class="pastilla pastilla-rosa">Pose &amp; Post</span>
       <h1 class="titular inicio-titulo">Capture your moment<br><span class="degradado-texto">in 3 photos</span></h1>
       <p class="inicio-sub">5-second countdown · Strip ready to download</p>
       <p class="inicio-evento oculto" id="inicio-evento"></p>
@@ -289,6 +289,10 @@ document.querySelectorAll(".modo").forEach(b => { b.onclick = () => {
   modoActual = b.dataset.modo;
   document.querySelectorAll(".modo").forEach(x => x.classList.toggle("sel", x === b));
   $("leyenda").textContent = modoActual === "boomerang" ? "Get ready to move" : "Smile";
+  // The 0/3 counter and progress dots only apply to Photos mode
+  const esBoom = modoActual === "boomerang";
+  $("contador").style.display = esBoom ? "none" : "";
+  $("puntos").style.display = esBoom ? "none" : "";
 }; });
 
 async function sesionFotos(){
