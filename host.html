@@ -6,7 +6,7 @@
 <title>Your event gallery — Pose &amp; Post</title>
 <link rel="icon" type="image/png" href="./icono.png">
 <link rel="apple-touch-icon" href="./icono.png">
-<link rel="stylesheet" href="./estilos.css?v=6">
+<link rel="stylesheet" href="./estilos.css?v=7">
 <style>
   .host-wrap { position:relative; z-index:2; max-width:1060px; margin:0 auto;
                padding:34px 20px 10px; text-align:center; }
@@ -17,16 +17,20 @@
   #host-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
                gap:14px; max-width:1060px; margin:26px auto 0; padding:0 20px; }
   .host-item { background:#fff; border-radius:16px; overflow:hidden;
+               padding-bottom:14px;
                box-shadow:0 10px 24px rgba(22,22,22,.08); }
   .host-media { aspect-ratio:3/4; background:#e9e4d8; position:relative; }
   .host-media img, .host-media video { width:100%; height:100%; object-fit:cover; display:block; }
   .host-tag { position:absolute; top:10px; left:10px; background:rgba(22,22,22,.75);
               color:#fff; font-size:10px; font-weight:800; letter-spacing:.12em;
               padding:5px 10px; border-radius:999px; text-transform:uppercase; }
-  .host-dl { width:100%; font-family:inherit; border:0; cursor:pointer;
-             padding:12px; font-size:13px; font-weight:800; letter-spacing:.06em;
-             background:#161616; color:#fff; }
-  .host-dl:active { opacity:.75; }
+  .host-dl { width:calc(100% - 24px); margin:12px 12px 0; font-family:inherit; border:0; cursor:pointer;
+             padding:13px; font-size:13px; font-weight:800; letter-spacing:.06em;
+             border-radius:999px;
+             background:#1a1a1d; color:#fff;
+             box-shadow:0 10px 22px rgba(22,22,22,.18), inset 0 1px 0 rgba(255,255,255,.14);
+             transition:transform .15s ease, opacity .15s ease; }
+  .host-dl:active { transform:scale(.97); opacity:.85; }
   #host-estado { max-width:520px; margin:40px auto; padding:0 20px; text-align:center;
                  color:var(--tinta-suave); font-size:16px; line-height:1.55; }
 </style>

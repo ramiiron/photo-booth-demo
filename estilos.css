@@ -33,7 +33,7 @@ body { background:var(--crema); color:var(--tinta); text-align:center;
             letter-spacing:.22em; text-transform:uppercase;
             padding:10px 20px 10px calc(20px + .22em); border-radius:999px; }
 .pastilla-rosa { color:#fff; background:var(--degradado);
-                 box-shadow:0 8px 22px rgba(244,63,142,.35); }
+                 box-shadow:0 10px 24px rgba(244,63,142,.28), inset 0 1px 0 rgba(255,255,255,.35); }
 .pastilla-verde { color:#0d7a3f; background:#d9f5e5; }
 .pastilla-linea { color:var(--tinta); background:#fff;
                   border:1.5px solid rgba(22,22,22,.14); }
@@ -50,24 +50,28 @@ body { background:var(--crema); color:var(--tinta); text-align:center;
 /* ----- Botones ----- */
 .btn-negro { display:inline-block; text-decoration:none; font-family:inherit;
              font-weight:800; font-size:15px; letter-spacing:.12em;
-             text-transform:uppercase; color:#fff; background:#161616;
+             text-transform:uppercase; color:#fff; background:#1a1a1d;
              padding:18px 44px 18px calc(44px + .12em); border:none;
              border-radius:999px; cursor:pointer;
-             box-shadow:0 14px 30px rgba(22,22,22,.28); }
-.btn-negro:active { transform:scale(.97); }
+             box-shadow:0 16px 34px rgba(22,22,22,.24), inset 0 1px 0 rgba(255,255,255,.16);
+             transition:transform .16s ease, box-shadow .2s ease; }
+.btn-negro:active { transform:scale(.96); }
 .btn-degradado { display:inline-block; text-decoration:none; font-family:inherit;
                  font-weight:800; font-size:15px; letter-spacing:.12em;
                  text-transform:uppercase; color:#fff; background:var(--degradado);
                  padding:18px 44px 18px calc(44px + .12em); border:none;
                  border-radius:999px; cursor:pointer;
-                 box-shadow:0 14px 30px rgba(244,63,142,.35); }
-.btn-degradado:active { transform:scale(.97); }
+                 box-shadow:0 16px 34px rgba(22,22,22,.16), 0 10px 26px rgba(244,63,142,.26), inset 0 1px 0 rgba(255,255,255,.35);
+                 transition:transform .16s ease, box-shadow .2s ease; }
+.btn-degradado:active { transform:scale(.96); }
 .btn-linea { display:inline-block; text-decoration:none; font-family:inherit;
               font-weight:800; font-size:14px; letter-spacing:.12em;
               text-transform:uppercase; color:var(--tinta); background:#fff;
               padding:16px 38px 16px calc(38px + .12em);
-              border:2px solid rgba(22,22,22,.16); border-radius:999px; cursor:pointer; }
-.btn-linea:active { transform:scale(.97); }
+              border:2px solid rgba(22,22,22,.12); border-radius:999px; cursor:pointer;
+              box-shadow:0 10px 22px rgba(22,22,22,.06);
+              transition:transform .16s ease, box-shadow .2s ease, border-color .2s ease; }
+.btn-linea:active { transform:scale(.96); }
 
 /* ----- Tarjeta blanca redondeada ----- */
 .tarjeta { background:var(--tarjeta); border-radius:var(--radio);
@@ -84,9 +88,17 @@ body[data-tpl="boda"]{
   --crema:#faf6ec;
   --rosa:#b98a1d; --naranja:#e8c874;
 }
-body[data-tpl="baby-shower"]{
-  --crema:#fdf3f7;
-  --rosa:#f9a8d4; --naranja:#93c5fd;
+body[data-tpl="baby-shower"]{ /* neutral / gender reveal */
+  --crema:#f6f7ef;
+  --rosa:#9db98a; --naranja:#e6c96e;
+}
+body[data-tpl="baby-nina"]{
+  --crema:#fdf2f5;
+  --rosa:#ef7fa8; --naranja:#eec27f;
+}
+body[data-tpl="baby-nino"]{
+  --crema:#eef5fb;
+  --rosa:#7db3e8; --naranja:#d9b878;
 }
 body[data-tpl="cumpleanos"]{
   --rosa:#8b5cf6; --naranja:#f59e0b;
