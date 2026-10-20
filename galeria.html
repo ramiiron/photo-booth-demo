@@ -42,8 +42,9 @@
           display:flex; flex-direction:column; border-radius:10px;
           box-shadow:var(--sombra); }
   .tira-marca { position:absolute; right:12px; bottom:10px; font-size:8px; font-weight:800;
-                letter-spacing:.08em; color:#fff; opacity:.85;
-                text-shadow:0 1px 5px rgba(0,0,0,.6); }
+                letter-spacing:.08em; color:#fff; opacity:.95;
+                -webkit-text-stroke:.6px rgba(0,0,0,.8);
+                text-shadow:0 1px 4px rgba(0,0,0,.65); }
   .tira-cabeza { height:26px; display:flex; align-items:center; justify-content:space-between;
                  font-size:8px; font-weight:800; letter-spacing:.14em; }
   .tira-fotos { flex:1; display:flex; flex-direction:column; gap:9px; margin:8px 0; }
@@ -186,18 +187,22 @@ if (!fotos.length){
   $("descargar-tira").onclick = descargarTira;
 }
 
-// Business watermark: small © name at the bottom-right of the canvas
+// Business watermark: small © name at the bottom-right of the canvas.
+// White text with a dark outline so it reads on any background.
 function dibujarMarca(x, W, H, tam){
   if (!negocio) return;
+  const texto = "© " + negocio;
+  const px = W - tam, py = H - Math.round(tam * 0.7);
   x.save();
-  x.globalAlpha = 0.85;
   x.font = "800 " + tam + "px Montserrat, Arial, sans-serif";
   x.textAlign = "right";
   x.textBaseline = "bottom";
+  x.lineJoin = "round";
+  x.lineWidth = Math.max(2, Math.round(tam * 0.22));
+  x.strokeStyle = "rgba(0,0,0,.8)";
+  x.strokeText(texto, px, py);
   x.fillStyle = "#fff";
-  x.shadowColor = "rgba(0,0,0,.55)";
-  x.shadowBlur = Math.round(tam * 0.35);
-  x.fillText("© " + negocio, W - tam, H - Math.round(tam * 0.7));
+  x.fillText(texto, px, py);
   x.restore();
 }
 
