@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your event gallery — Pose &amp; Post</title>
+<link rel="icon" type="image/png" href="./icono.png">
+<link rel="apple-touch-icon" href="./icono.png">
+<link rel="stylesheet" href="./estilos.css?v=6">
+<style>
+  .host-wrap { position:relative; z-index:2; max-width:1060px; margin:0 auto;
+               padding:34px 20px 10px; text-align:center; }
+  .host-titulo { font-size:clamp(30px,6vw,46px); margin:20px 0 10px; }
+  .host-sub { color:var(--tinta-suave); font-size:15px; font-weight:500; }
+  #host-conteo { margin-top:10px; font-size:12px; font-weight:800;
+                 letter-spacing:.14em; text-transform:uppercase; }
+  #host-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+               gap:14px; max-width:1060px; margin:26px auto 0; padding:0 20px; }
+  .host-item { background:#fff; border-radius:16px; overflow:hidden;
+               box-shadow:0 10px 24px rgba(22,22,22,.08); }
+  .host-media { aspect-ratio:3/4; background:#e9e4d8; position:relative; }
+  .host-media img, .host-media video { width:100%; height:100%; object-fit:cover; display:block; }
+  .host-tag { position:absolute; top:10px; left:10px; background:rgba(22,22,22,.75);
+              color:#fff; font-size:10px; font-weight:800; letter-spacing:.12em;
+              padding:5px 10px; border-radius:999px; text-transform:uppercase; }
+  .host-dl { width:100%; font-family:inherit; border:0; cursor:pointer;
+             padding:12px; font-size:13px; font-weight:800; letter-spacing:.06em;
+             background:#161616; color:#fff; }
+  .host-dl:active { opacity:.75; }
+  #host-estado { max-width:520px; margin:40px auto; padding:0 20px; text-align:center;
+                 color:var(--tinta-suave); font-size:16px; line-height:1.55; }
+</style>
+</head>
+<body>
+<script src="./fondo.js"></script>
+
+<div class="host-wrap">
+  <span class="pastilla pastilla-rosa">Pose &amp; Post</span>
+  <h1 class="titular host-titulo">Your event<br><span class="degradado-texto">gallery</span></h1>
+  <p class="host-sub" id="host-sub">Every photo and boomerang from the event, in one place.</p>
+  <p id="host-conteo"></p>
+</div>
+
+<div id="host-estado">Loading your gallery…</div>
+<div id="host-grid"></div>
+
+<div class="pie">
+  <span id="host-pie">Pose &amp; Post · Photo Booth</span>
+  <span class="priv-nota">Photos are automatically deleted 24 hours after the event — download your favorites now.</span>
+</div>
+
+<script>
+const CLOUD = "lubasdf9"; // same Cloudinary account as the booth
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
+// Event slug from the link: host.html?ev=halloween-2026
+const ev = (new URLSearchParams(location.search).get("ev") || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+const TAG = "pb-" + ev;
+
+function urlRecurso(tipo, r, transf){
+  const pid = String(r.public_id).split("/").map(encodeURIComponent).join("/");
+  return "https://res.cloudinary.com/" + CLOUD + "/" + tipo + "/upload/" +
+         (transf ? transf + "/" : "") + "v" + r.version + "/" + pid + "." + r.format;
+}
+function urlPoster(r){
+  const pid = String(r.public_id).split("/").map(encodeURIComponent).join("/");
+  return "https://res.cloudinary.com/" + CLOUD + "/video/upload/w_640/v" + r.version + "/" + pid + ".jpg";
+}
+
+async function lista(tipo){
+  try {
+    const r = await fetch("https://res.cloudinary.com/" + CLOUD + "/" + tipo + "/list/" + TAG + ".json");
+    if (!r.ok) return []; // 404 = no resources with this tag yet
+    const j = await r.json();
+    return (j.resources || []).map(x => ({ ...x, _tipo: tipo }));
+  } catch (e) { return []; }
+}
+
+// Download one file (fetch -> blob; fallback: open it)
+async function descargar(url, nombre, btn){
+  const antes = btn.textContent;
+  btn.textContent = "Downloading…";
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const b = await r.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(b);
+    a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  } catch (e) { window.open(url, "_blank"); }
+  btn.textContent = antes;
+}
+
+async function cargar(){
+  if (!ev) {
+    $("host-estado").textContent = "This link is missing its event code. Ask Pose & Post for the full link to your gallery.";
+    return;
+  }
+  $("host-sub").textContent = "Event: " + ev.replace(/-/g, " ");
+  const [fotos, videos] = await Promise.all([lista("image"), lista("video")]);
+  const todo = [...fotos, ...videos].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  if (!todo.length) {
+    $("host-estado").innerHTML = "No photos found for this event yet.<br>If the event already ended, the link may have expired — photos are deleted 24 hours after the event.";
+    return;
+  }
+  $("host-estado").style.display = "none";
+  const nf = todo.filter(x => x._tipo === "image").length;
+  const nv = todo.length - nf;
+  $("host-conteo").textContent =
+    (nf ? nf + (nf === 1 ? " photo" : " photos") : "") + (nf && nv ? " · " : "") +
+    (nv ? nv + (nv === 1 ? " boomerang" : " boomerangs") : "");
+  $("host-grid").innerHTML = todo.map((r, i) => {
+    const esVideo = r._tipo === "video";
+    const completa = urlRecurso(r._tipo, r);
+    const nombre = "pose-and-post-" + (i + 1) + "." + r.format;
+    const media = esVideo
+      ? `<video src="${esc(completa)}" poster="${esc(urlPoster(r))}" autoplay loop muted playsinline></video><span class="host-tag">Boomerang</span>`
+      : `<img src="${esc(urlRecurso("image", r, "w_640"))}" alt="Event photo ${i + 1}" loading="lazy">`;
+    return `<div class="host-item"><div class="host-media">${media}</div>
+            <button class="host-dl" data-url="${esc(completa)}" data-nombre="${esc(nombre)}">Download</button></div>`;
+  }).join("");
+  document.querySelectorAll(".host-dl").forEach(b =>
+    b.onclick = () => descargar(b.dataset.url, b.dataset.nombre, b));
+}
+cargar();
+</script>
+</body>
+</html>
