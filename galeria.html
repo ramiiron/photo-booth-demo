@@ -38,8 +38,8 @@
   .mini.noir { background:#0b0b0d; }
 
   /* Strip preview (600:1800 ratio) */
-  .tira { position:relative; width:200px; aspect-ratio:600/1800; margin:0 auto 26px; padding:12px;
-          display:flex; flex-direction:column; border-radius:10px;
+  .tira { position:relative; width:200px; aspect-ratio:600/1800; margin:0 auto 26px; padding:14px;
+          display:flex; flex-direction:column; border-radius:18px;
           box-shadow:var(--sombra); }
   .tira-marca { position:absolute; right:12px; bottom:10px; font-size:8px; font-weight:800;
                 letter-spacing:.08em; color:#fff; opacity:.95;
@@ -47,8 +47,8 @@
                 text-shadow:0 1px 4px rgba(0,0,0,.65); }
   .tira-cabeza { height:26px; display:flex; align-items:center; justify-content:space-between;
                  font-size:8px; font-weight:800; letter-spacing:.14em; }
-  .tira-fotos { flex:1; display:flex; flex-direction:column; gap:9px; margin:8px 0; }
-  .tira-fotos img { flex:1; width:100%; min-height:0; object-fit:cover; border-radius:4px;
+  .tira-fotos { flex:1; display:flex; flex-direction:column; gap:10px; margin:9px 0; }
+  .tira-fotos img { flex:1; width:100%; min-height:0; object-fit:cover; border-radius:10px;
                    background:#ddd; display:block; }
   .tira-pie { height:30px; display:flex; align-items:center; justify-content:center;
               font-size:9px; font-weight:800; letter-spacing:.22em; }
@@ -60,7 +60,7 @@
 
   /* Individuals */
   .foto { margin-bottom:40px; }
-  .foto img { width:100%; max-width:520px; border-radius:20px; display:block;
+  .foto img { width:100%; max-width:520px; border-radius:30px; display:block;
               margin:0 auto 18px; box-shadow:var(--sombra); background:#fff; }
 
   footer { font-size:12px; font-weight:700; letter-spacing:.24em; text-transform:uppercase;
@@ -258,6 +258,17 @@ function dibujarCover(x, img, dx, dy, dw, dh){
   const w = img.width * s, h = img.height * s;
   x.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
 }
+// Rounded-rect clip path (for the strip's photos)
+function clipRedondeado(x, dx, dy, dw, dh, r){
+  x.beginPath();
+  x.moveTo(dx + r, dy);
+  x.arcTo(dx + dw, dy, dx + dw, dy + dh, r);
+  x.arcTo(dx + dw, dy + dh, dx, dy + dh, r);
+  x.arcTo(dx, dy + dh, dx, dy, r);
+  x.arcTo(dx, dy, dx + dw, dy, r);
+  x.closePath();
+  x.clip();
+}
 
 async function descargarTira(){
   const btn = $("descargar-tira");
@@ -283,9 +294,15 @@ async function descargarTira(){
     }
     x.fillRect(0, 0, W, H);
 
-    // Photos
+    // Photos (rounded corners, same as the on-screen preview)
     const imgs = await Promise.all(fotos.map(cargar));
-    imgs.forEach((img, i) => dibujarCover(x, img, pad, pad + cabezaH + i * (fh + gap), fw, fh));
+    imgs.forEach((img, i) => {
+      const dy = pad + cabezaH + i * (fh + gap);
+      x.save();
+      clipRedondeado(x, pad, dy, fw, fh, 22);
+      dibujarCover(x, img, pad, dy, fw, fh);
+      x.restore();
+    });
 
     // Text
     x.fillStyle = M.tinta;
