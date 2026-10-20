@@ -55,6 +55,8 @@
                 text-shadow:0 1px 4px rgba(0,0,0,.65); }
   .tira-cabeza { height:26px; display:flex; align-items:center; justify-content:space-between;
                  font-size:8px; font-weight:800; letter-spacing:.14em; }
+  .tira-logo { display:flex; align-items:center; justify-content:center; padding:7px 10px 1px; }
+  .tira-logo img { max-height:34px; max-width:88%; object-fit:contain; display:block; }
   .tira-fotos { flex:1; display:flex; flex-direction:column; gap:10px; margin:9px 0; }
   .tira-fotos img { flex:1; width:100%; min-height:0; object-fit:cover; border-radius:10px;
                    background:#ddd; display:block; }
@@ -117,6 +119,7 @@
       </div>
       <div class="tira retro" id="tira">
         <div class="tira-cabeza"><span id="tira-cabeza-izq">PHOTO BOOTH</span><span id="tira-cabeza-der">RETRO · 2026</span></div>
+        <div class="tira-logo oculto" id="tira-logo"><img id="tira-logo-img" alt=""></div>
         <div class="tira-fotos" id="tira-fotos"></div>
         <div class="tira-pie" id="tira-pie">✦ MEMORIES ✦</div>
         <div class="tira-marca oculto" id="tira-marca"></div>
@@ -134,8 +137,8 @@
     </div>
   </div>
 
-  <footer>Thanks for coming</footer>
-  <p class="priv-nota">Photos are automatically deleted<br>24 hours after the event.</p>
+  <footer id="pie-gracias">Thanks for coming</footer>
+  <p class="priv-nota" id="priv-nota">Photos are automatically deleted<br>24 hours after the event.</p>
   <a class="cta-reserva oculto" id="cta-reserva" href="https://ramiiron.github.io/pose-and-post/" target="_blank" rel="noopener">Book Pose &amp; Post for your event</a>
 </div>
 
@@ -149,24 +152,84 @@ const $ = id => document.getElementById(id);
 // Per-event customization (comes in the QR from the booth config)
 const evNombre = (qs.get("ev") || "").trim();
 const negocio = (qs.get("neg") || "").trim(); // business name for the watermark
+// Client logo for the strip (Cloudinary only, so the canvas stays exportable)
+const logoUrl = (qs.get("logo") || "").startsWith("https://res.cloudinary.com/") ? qs.get("logo") : "";
+
+// ===== Language (comes from the booth via the QR: &lang=es) =====
+const LANG = qs.get("lang") === "es" ? "es" : "en";
+const GT = {
+  en: {
+    tituloDef: 'Your <span class="degradado-texto">photos</span>',
+    subDef: "Choose how to take them",
+    vacio: "This gallery needs a link with photos.<br>Scan the Photo Booth QR code to see yours.",
+    boomListo: "Your boomerang is ready",
+    tira: "Strip", ind: "Individuals",
+    bn: "B&W", vivido: "Vivid",
+    descargarTira: "Download strip (PNG)", generando: "Generating…", abriendo: "Opening…",
+    descargarFoto: "Download", descargarBoom: "Download boomerang",
+    gracias: "Thanks for coming",
+    priv: "Photos are automatically deleted<br>24 hours after the event.",
+    cta: "Book Pose & Post for your event",
+    errFoto: "Couldn't prepare the photo. Try again.",
+    errVideo: "Couldn't prepare the video. Try again.",
+    errTira: "Couldn't generate the strip. Try the individual photos.",
+    compartirTira: "My Photo Booth strip"
+  },
+  es: {
+    tituloDef: 'Tus <span class="degradado-texto">fotos</span>',
+    subDef: "Elige cómo llevártelas",
+    vacio: "Esta galería necesita un enlace con fotos.<br>Escanea el código QR del Photo Booth para ver las tuyas.",
+    boomListo: "Tu boomerang está listo",
+    tira: "Tira", ind: "Individuales",
+    bn: "B/N", vivido: "Vívido",
+    descargarTira: "Descargar tira (PNG)", generando: "Generando…", abriendo: "Abriendo…",
+    descargarFoto: "Descargar", descargarBoom: "Descargar boomerang",
+    gracias: "Gracias por venir",
+    priv: "Las fotos se eliminan automáticamente<br>24 horas después del evento.",
+    cta: "Reserva Pose & Post para tu evento",
+    errFoto: "No se pudo preparar la foto. Intenta de nuevo.",
+    errVideo: "No se pudo preparar el video. Intenta de nuevo.",
+    errTira: "No se pudo generar la tira. Prueba las fotos individuales.",
+    compartirTira: "Mi tira del Photo Booth"
+  }
+};
+const G = GT[LANG];
+document.documentElement.lang = LANG;
+if (LANG === "es") document.title = "Tus fotos — Photo Booth";
+
 const PLANTILLAS = {
-  "fiesta":      { etiqueta: "Your session" },
-  "boda":        { etiqueta: "Our wedding" },
-  "baby-shower": { etiqueta: "Baby shower" },
-  "cumpleanos":  { etiqueta: "Birthday" },
-  "halloween":   { etiqueta: "Halloween" },
-  "graduacion":  { etiqueta: "Graduation" },
+  "fiesta":      { en: "Your session", es: "Tu sesión" },
+  "boda":        { en: "Our wedding",  es: "Nuestra boda" },
+  "baby-shower": { en: "Baby shower",  es: "Baby shower" },
+  "cumpleanos":  { en: "Birthday",     es: "Cumpleaños" },
+  "halloween":   { en: "Halloween",    es: "Halloween" },
+  "graduacion":  { en: "Graduation",   es: "Graduación" },
 };
 const tpl = PLANTILLAS[qs.get("tpl")] ? qs.get("tpl") : "fiesta";
 document.body.dataset.tpl = tpl;
 if (evNombre){
-  $("ev-pildora").textContent = PLANTILLAS[tpl].etiqueta;
+  $("ev-pildora").textContent = PLANTILLAS[tpl][LANG];
   $("ev-titulo").textContent = evNombre;
+} else {
+  $("ev-pildora").textContent = PLANTILLAS[tpl][LANG];
+  $("ev-titulo").innerHTML = G.tituloDef;
 }
+
+// Static texts in the chosen language
+$("sub").textContent = G.subDef;
+$("tab-tira").textContent = G.tira;
+$("tab-ind").textContent = G.ind;
+$("descargar-tira").textContent = G.descargarTira;
+$("descargar-boomerang").textContent = G.descargarBoom;
+$("pie-gracias").textContent = G.gracias;
+$("priv-nota").innerHTML = G.priv;
+$("cta-reserva").textContent = G.cta;
+document.querySelector('[data-filtro="bn"]').textContent = G.bn;
+document.querySelector('[data-filtro="vivido"]').textContent = G.vivido;
 
 // Available strip frames
 const MARCOS = {
-  retro:   { cabeza:["PHOTO BOOTH","RETRO · 2026"], pie:"✦ MEMORIES ✦", fondo:"#f5eedd", tinta:"#2b2118", fuente:800 },
+  retro:   { cabeza:["PHOTO BOOTH","RETRO · 2026"], pie:(LANG === "es" ? "✦ RECUERDOS ✦" : "✦ MEMORIES ✦"), fondo:"#f5eedd", tinta:"#2b2118", fuente:800 },
   clasico: { cabeza:["FLASHBOX SEOUL","CLASSIC MINIMAL"], pie:"", fondo:"#ffffff", tinta:"#9a9a9a", fuente:800 },
   pastel:  { cabeza:["PASTEL DREAM",""], pie:"cutie", fondo:null, degradado:["#ffd6e8","#d9c8ff"], tinta:"#ffffff", fuente:800 },
   noir:    { cabeza:["[RAW_03]",'<span class="rec">● REC</span>'], pie:"CYBER NOIR", fondo:"#0b0b0d", tinta:"#7dff9a", fuente:800, rec:"#ff3b3b" }
@@ -186,7 +249,7 @@ let filtroActual = "original";
 async function compartirVideo(btn){
   const orig = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "Opening…";
+  btn.textContent = G.abriendo;
   try {
     const blob = await (await fetch(videoUrl)).blob();
     const ext = blob.type.includes("mp4") ? "mp4" : "webm";
@@ -201,7 +264,7 @@ async function compartirVideo(btn){
       descargarBlob(blob, file.name);
     }
   } catch(e){
-    alert("Couldn't prepare the video. Try again.");
+    alert(G.errVideo);
   }
   btn.textContent = orig;
   btn.disabled = false;
@@ -215,10 +278,10 @@ function fijarFiltro(nombre){
 document.querySelectorAll(".filtro-g").forEach(b => { b.onclick = () => fijarFiltro(b.dataset.filtro); });
 
 if (!fotos.length && !videoUrl){
-  $("sub").innerHTML = "This gallery needs a link with photos.<br>Scan the Photo Booth QR code to see yours.";
+  $("sub").innerHTML = G.vacio;
 } else if (videoUrl){
   // Boomerang session: just the looping clip + download/share
-  $("sub").textContent = "Your boomerang is ready";
+  $("sub").textContent = G.boomListo;
   $("opciones").classList.remove("oculto");
   document.querySelector(".tabs").classList.add("oculto");
   $("filtros").classList.add("oculto");
@@ -232,7 +295,11 @@ if (!fotos.length && !videoUrl){
 
   // Strip preview
   $("tira-fotos").innerHTML = fotos.map((f,i) =>
-    `<img src="${esc(f)}" alt="Photo ${i+1}" loading="lazy">`).join("");
+    `<img src="${esc(f)}" alt="${LANG === "es" ? "Foto" : "Photo"} ${i+1}" loading="lazy">`).join("");
+  if (logoUrl){
+    $("tira-logo-img").src = logoUrl;
+    $("tira-logo").classList.remove("oculto");
+  }
   $("tira-pie").textContent = evNombre || MARCOS[marcoActual].pie;
   if (negocio){
     $("tira-marca").textContent = "© " + negocio;
@@ -241,8 +308,8 @@ if (!fotos.length && !videoUrl){
 
   // Individuals (watermark composited on a canvas before sharing)
   $("gal").innerHTML = fotos.map((f,i) =>
-    `<div class="foto"><img src="${esc(f)}" alt="Photo ${i+1}" loading="lazy"><br>` +
-      `<button class="btn-linea" data-idx="${i}" data-nombre="photo-booth-${i+1}.jpg">Download</button></div>`).join("");
+    `<div class="foto"><img src="${esc(f)}" alt="${LANG === "es" ? "Foto" : "Photo"} ${i+1}" loading="lazy"><br>` +
+      `<button class="btn-linea" data-idx="${i}" data-nombre="photo-booth-${i+1}.jpg">${G.descargarFoto}</button></div>`).join("");
   $("gal").addEventListener("click", e => {
     const b = e.target.closest("button[data-idx]");
     if (b) compartirFoto(+b.dataset.idx, b.dataset.nombre, b);
@@ -316,7 +383,7 @@ async function fotoConMarca(url){
 async function compartirFoto(i, nombre, btn){
   const orig = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "Opening…";
+  btn.textContent = G.abriendo;
   try {
     const blob = await fotoConMarca(fotos[i]);
     const file = new File([blob], nombre, { type: "image/jpeg" });
@@ -331,7 +398,7 @@ async function compartirFoto(i, nombre, btn){
       descargarBlob(blob, nombre);
     }
   } catch(e){
-    alert("Couldn't prepare the photo. Try again.");
+    alert(G.errFoto);
   }
   btn.textContent = orig;
   btn.disabled = false;
@@ -351,6 +418,12 @@ function dibujarCover(x, img, dx, dy, dw, dh){
   const w = img.width * s, h = img.height * s;
   x.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
 }
+// Draws an image fully inside a box, keeping its aspect ratio (logos)
+function dibujarContain(x, img, dx, dy, dw, dh){
+  const s = Math.min(dw / img.width, dh / img.height);
+  const w = img.width * s, h = img.height * s;
+  x.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
+}
 // Rounded-rect clip path (for the strip's photos)
 function clipRedondeado(x, dx, dy, dw, dh, r){
   x.beginPath();
@@ -365,14 +438,17 @@ function clipRedondeado(x, dx, dy, dw, dh, r){
 
 async function descargarTira(){
   const btn = $("descargar-tira");
-  btn.textContent = "Generating…";
+  btn.textContent = G.generando;
   btn.disabled = true;
   try {
     await document.fonts.ready;
     const M = MARCOS[marcoActual];
     const W = 600, H = 1800, pad = 36, cabezaH = 76, pieH = 96, gap = 26;
+    // Client logo (optional): an extra band under the header
+    const logoImg = logoUrl ? await cargar(logoUrl).catch(() => null) : null;
+    const logoH = logoImg ? 104 : 0;
     const fw = W - pad * 2;
-    const fh = (H - pad * 2 - cabezaH - pieH - gap * 2) / fotos.length;
+    const fh = (H - pad * 2 - cabezaH - logoH - pieH - gap * 2) / fotos.length;
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const x = c.getContext("2d");
@@ -387,10 +463,13 @@ async function descargarTira(){
     }
     x.fillRect(0, 0, W, H);
 
+    // Client logo under the header
+    if (logoImg) dibujarContain(x, logoImg, pad, pad + cabezaH + 4, fw, logoH - 8);
+
     // Photos (rounded corners, same as the on-screen preview)
     const imgs = await Promise.all(fotos.map(cargar));
     imgs.forEach((img, i) => {
-      const dy = pad + cabezaH + i * (fh + gap);
+      const dy = pad + cabezaH + logoH + i * (fh + gap);
       x.save();
       clipRedondeado(x, pad, dy, fw, fh, 22);
       x.filter = FILTROS[filtroActual];
@@ -425,9 +504,9 @@ async function descargarTira(){
     const file = new File([blob], "tira-photo-booth.png", { type: "image/png" });
     let listo = false;
     if (navigator.canShare && navigator.canShare({ files: [file] })){
-      btn.textContent = "Opening…";
+      btn.textContent = G.abriendo;
       try {
-        await navigator.share({ files: [file], title: "My Photo Booth strip" });
+        await navigator.share({ files: [file], title: G.compartirTira });
         listo = true;
       } catch(e){
         // If the user cancelled, do nothing more; if it failed, download
@@ -437,9 +516,9 @@ async function descargarTira(){
     }
     if (!listo) descargarBlob(blob, "tira-photo-booth.png");
   } catch(e){
-    alert("Couldn't generate the strip. Try the individual photos.");
+    alert(G.errTira);
   }
-  btn.textContent = "Download strip (PNG)";
+  btn.textContent = G.descargarTira;
   btn.disabled = false;
 }
 

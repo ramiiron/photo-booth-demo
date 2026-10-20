@@ -92,6 +92,19 @@
           padding:10px 20px; border-radius:999px; cursor:pointer; }
   .modo.sel { background:#fff; color:#161616; border-color:#fff; }
 
+  /* ===== Language toggle (start screen) ===== */
+  #idiomas { position:absolute; top:20px; right:20px; z-index:3; display:flex; gap:6px; }
+  #idiomas button { font-family:inherit; font-size:12px; font-weight:800; letter-spacing:.1em;
+                    color:#fff; background:rgba(255,255,255,.14);
+                    border:1.5px solid rgba(255,255,255,.35);
+                    padding:8px 14px; border-radius:999px; cursor:pointer; }
+  #idiomas button.sel { background:#fff; color:#161616; border-color:#fff; }
+
+  /* ===== Pending uploads badge (offline queue) ===== */
+  #pendientes { position:fixed; left:18px; bottom:18px; z-index:7; cursor:pointer;
+                background:rgba(22,22,22,.85); color:#fff; font-size:12px; font-weight:700;
+                letter-spacing:.05em; padding:9px 16px; border-radius:999px; }
+
   /* ===== Countdown ===== */
   #cuenta { position:fixed; inset:0; z-index:5; display:none; align-items:center;
             justify-content:center; font-size:clamp(140px,38vw,220px);
@@ -118,42 +131,47 @@
   <div id="vista-inicio" role="button" aria-label="Tap to start">
     <div class="inicio-fondo" aria-hidden="true"></div>
     <div class="inicio-velo" aria-hidden="true"></div>
+    <div id="idiomas">
+      <button type="button" data-idioma="en">EN</button>
+      <button type="button" data-idioma="es">ES</button>
+    </div>
     <div class="inicio-contenido">
       <span class="pastilla pastilla-rosa">Pose &amp; Post</span>
-      <h1 class="titular inicio-titulo">Capture your moment<br><span class="degradado-texto">in 3 photos</span></h1>
-      <p class="inicio-sub">5-second countdown · Strip ready to download</p>
+      <h1 class="titular inicio-titulo" data-txt="titulo">Capture your moment<br><span class="degradado-texto">in 3 photos</span></h1>
+      <p class="inicio-sub" data-txt="sub">5-second countdown · Strip ready to download</p>
       <p class="inicio-evento oculto" id="inicio-evento"></p>
-      <span class="btn-negro">Start →</span>
+      <span class="btn-negro" data-txt="empezar">Start →</span>
     </div>
   </div>
 
   <div id="vista-camara" class="oculto">
     <video id="preview" playsinline muted autoplay></video>
     <div class="hud-arriba">
-      <span class="envivo"><span class="punto-rojo"></span>Live</span>
+      <span class="envivo"><span class="punto-rojo"></span><span data-txt="enVivo">Live</span></span>
       <span class="contador" id="contador">0/3</span>
     </div>
     <div class="hud-abajo"></div>
     <div id="leyenda">Smile</div>
     <div id="modos">
-      <button class="modo sel" data-modo="fotos">Photos</button>
+      <button class="modo sel" data-modo="fotos" data-txt="fotos">Photos</button>
       <button class="modo" data-modo="boomerang">Boomerang</button>
     </div>
     <button id="obturador" aria-label="Take photos"></button>
     <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
-    <button id="reintentar" class="btn-degradado oculto">Retry upload</button>
   </div>
 
   <div id="cuenta">5</div>
   <div id="flash"></div>
 
   <div id="vista-qr" class="centro oculto">
-    <span class="pastilla pastilla-verde">Photos ready!</span>
-    <h2 class="titular qr-titulo">Scan to<br>download</h2>
+    <span class="pastilla pastilla-verde" data-txt="qrPastilla">Photos ready!</span>
+    <h2 class="titular qr-titulo" data-txt="qrTitulo">Scan to<br>download</h2>
     <div id="qrbox"><div id="qr"></div></div>
-    <p class="qr-sub">Point your camera at the code<br>and take your photos</p>
-    <button id="otra" class="btn-negro">New session</button>
+    <p class="qr-sub" data-txt="qrSub">Point your camera at the code<br>and take your photos</p>
+    <button id="otra" class="btn-negro" data-txt="otra">New session</button>
   </div>
+
+  <div id="pendientes" class="oculto"></div>
 </div>
 
 <script src="./qrcode.min.js"></script>
@@ -172,12 +190,86 @@ const UPLOAD_PRESET = "photo-booth";
 const EVENTO = {
   nombre: "",            // e.g. "Jennifer's Baby Shower" ("" = no customization)
   plantilla: "fiesta",   // fiesta | boda | baby-shower | cumpleanos | halloween | graduacion
+  logo: "",              // optional client logo URL (Cloudinary) shown on the strip
 };
 
 // ===== Business setup (watermark on downloaded photos and strips) =====
 const NEGOCIO = {
   nombre: "Pose & Post",  // e.g. "Flashbox Studio" ("" = no watermark)
 };
+
+// ===== Language: EN/ES toggle on the start screen, saved on this iPad =====
+let idioma = "en";
+try { if (localStorage.getItem("pb-idioma") === "es") idioma = "es"; } catch(e){}
+const TXT = {
+  en: {
+    titulo: 'Capture your moment<br><span class="degradado-texto">in 3 photos</span>',
+    sub: "5-second countdown · Strip ready to download",
+    empezar: "Start →",
+    enVivo: "Live",
+    fotos: "Photos",
+    qrPastilla: "Photos ready!",
+    qrTitulo: "Scan to<br>download",
+    qrSub: "Point your camera at the code<br>and take your photos",
+    otra: "New session",
+    sonrie: "Smile",
+    muevete: "Get ready to move",
+    fotoDe: i => `Photo ${i} of 3 — get ready`,
+    boomListo: "Boomerang — get ready",
+    mueve: "Move!",
+    creandoBoom: "Creating your boomerang…",
+    subiendo: "Uploading…",
+    subiendoFotos: i => `Uploading photos… ${i}/3`,
+    errorAlgo: "Something went wrong. Try again.",
+    sinConexion: "Saved on this iPad — no connection. It will upload on its own.",
+    errorCamara: "Couldn't access the camera. Check the permission in Settings.",
+    pend: n => n === 1 ? "1 pending upload" : n + " pending uploads"
+  },
+  es: {
+    titulo: 'Captura tu momento<br><span class="degradado-texto">en 3 fotos</span>',
+    sub: "Cuenta regresiva de 5 segundos · Tira lista para descargar",
+    empezar: "Empezar →",
+    enVivo: "En vivo",
+    fotos: "Fotos",
+    qrPastilla: "¡Fotos listas!",
+    qrTitulo: "Escanea para<br>descargar",
+    qrSub: "Apunta tu cámara al código<br>y llévate tus fotos",
+    otra: "Nueva sesión",
+    sonrie: "Sonríe",
+    muevete: "Prepárate para moverte",
+    fotoDe: i => `Foto ${i} de 3 — prepárate`,
+    boomListo: "Boomerang — prepárate",
+    mueve: "¡Muévete!",
+    creandoBoom: "Creando tu boomerang…",
+    subiendo: "Subiendo…",
+    subiendoFotos: i => `Subiendo fotos… ${i}/3`,
+    errorAlgo: "Algo salió mal. Intenta de nuevo.",
+    sinConexion: "Guardado en este iPad — sin conexión. Se subirá solo.",
+    errorCamara: "No se pudo acceder a la cámara. Revisa el permiso en Ajustes.",
+    pend: n => n === 1 ? "1 subida pendiente" : n + " subidas pendientes"
+  }
+};
+const T = () => TXT[idioma];
+
+function aplicarIdioma(){
+  document.querySelectorAll("[data-txt]").forEach(el => {
+    const v = T()[el.dataset.txt];
+    if (typeof v === "string") el.innerHTML = v;
+  });
+  document.querySelectorAll("#idiomas button").forEach(b =>
+    b.classList.toggle("sel", b.dataset.idioma === idioma));
+  document.documentElement.lang = idioma;
+  $("leyenda").textContent = (typeof modoActual !== "undefined" && modoActual === "boomerang") ? T().muevete : T().sonrie;
+  actualizarPendientes();
+}
+
+// Gallery URL with the event config (name, template, business, language, logo)
+function urlGaleria(extra){
+  return BASE + "/galeria.html?" + extra +
+    "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
+    "&neg=" + encodeURIComponent(NEGOCIO.nombre) + "&lang=" + idioma +
+    (EVENTO.logo ? "&logo=" + encodeURIComponent(EVENTO.logo) : "");
+}
 
 function mostrar(id){
   ["vista-inicio","vista-camara","vista-qr"].forEach(x => $(x).classList.toggle("oculto", x !== id));
@@ -204,7 +296,7 @@ $("vista-inicio").onclick = async () => {
     await video.play();
     mostrar("vista-camara");
   } catch (e) {
-    alert("Couldn't access the camera. Check the permission in Settings.");
+    alert(TXT[idioma].errorCamara);
   }
 };
 
@@ -261,25 +353,115 @@ async function subirFoto(blob, i){
   return j.secure_url;
 }
 
+function mostrarQR(url){
+  $("qr").innerHTML = "";
+  new QRCode($("qr"), { text: url, width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
+  mostrar("vista-qr");
+}
+
+// ===== Offline queue (IndexedDB) =====
+// If the venue's internet drops, sessions are saved on the iPad and
+// uploaded automatically when the connection comes back.
+let sesionActiva = false;
+let procesandoCola = false;
+
+function abrirDB(){
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open("photo-booth", 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore("pendientes", { keyPath: "id" });
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function colaGuardar(item){
+  try {
+    const db = await abrirDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction("pendientes", "readwrite");
+      tx.objectStore("pendientes").put(item);
+      tx.oncomplete = res;
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch(e){ /* no IndexedDB: the session stays in memory only */ }
+}
+async function colaTodos(){
+  try {
+    const db = await abrirDB();
+    return new Promise((res, rej) => {
+      const rq = db.transaction("pendientes").objectStore("pendientes").getAll();
+      rq.onsuccess = () => res(rq.result || []);
+      rq.onerror = () => rej(rq.error);
+    });
+  } catch(e){ return []; }
+}
+async function colaBorrar(id){
+  try {
+    const db = await abrirDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction("pendientes", "readwrite");
+      tx.objectStore("pendientes").delete(id);
+      tx.oncomplete = res;
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch(e){}
+}
+async function actualizarPendientes(){
+  const items = await colaTodos();
+  const b = $("pendientes");
+  if (items.length){
+    b.textContent = T().pend(items.length);
+    b.classList.remove("oculto");
+  } else {
+    b.classList.add("oculto");
+  }
+}
+async function encolarSesion(item){
+  item.id = Date.now() + Math.floor(Math.random() * 1000);
+  await colaGuardar(item);
+  await actualizarPendientes();
+  $("leyenda").textContent = T().sinConexion;
+}
+async function procesarCola(){
+  if (procesandoCola) return;
+  procesandoCola = true;
+  try {
+    const items = (await colaTodos()).sort((a, b) => a.id - b.id);
+    for (const item of items){
+      try {
+        let url;
+        if (item.tipo === "boomerang"){
+          const urlVideo = await subirVideo(item.video);
+          url = urlGaleria("v=" + encodeURIComponent(urlVideo));
+        } else {
+          const urls = [];
+          for (let i = 0; i < item.fotos.length; i++){
+            const blob = await (await fetch(item.fotos[i])).blob();
+            urls.push(await subirFoto(blob, i));
+          }
+          url = urlGaleria(urls.map(u => "f=" + encodeURIComponent(u)).join("&"));
+        }
+        await colaBorrar(item.id);
+        // Show the QR only if the booth is free (nobody mid-session)
+        if (!sesionActiva && $("vista-qr").classList.contains("oculto")) mostrarQR(url);
+      } catch(e){ /* still offline: it stays queued for the next round */ }
+    }
+  } finally {
+    procesandoCola = false;
+    actualizarPendientes();
+  }
+}
+
 async function subirYMostrarQR(fotos){
-  $("reintentar").classList.add("oculto");
   try {
     const urls = [];
     for (let i = 0; i < fotos.length; i++){
-      $("leyenda").textContent = "Uploading photos… " + (i+1) + "/3";
+      $("leyenda").textContent = T().subiendoFotos(i + 1);
       const blob = await (await fetch(fotos[i])).blob();
       urls.push(await subirFoto(blob, i));
     }
-    const url = BASE + "/galeria.html?" + urls.map(u => "f=" + encodeURIComponent(u)).join("&") +
-      "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
-      "&neg=" + encodeURIComponent(NEGOCIO.nombre);
-    $("qr").innerHTML = "";
-    new QRCode($("qr"), { text: url, width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
-    mostrar("vista-qr");
+    mostrarQR(urlGaleria(urls.map(u => "f=" + encodeURIComponent(u)).join("&")));
   } catch(e){
-    $("leyenda").textContent = "Upload failed. Check your internet.";
-    $("reintentar").classList.remove("oculto");
-    $("reintentar").onclick = () => subirYMostrarQR(fotos);
+    await encolarSesion({ tipo: "fotos", fotos });
   }
 }
 
@@ -288,7 +470,7 @@ let modoActual = "fotos";
 document.querySelectorAll(".modo").forEach(b => { b.onclick = () => {
   modoActual = b.dataset.modo;
   document.querySelectorAll(".modo").forEach(x => x.classList.toggle("sel", x === b));
-  $("leyenda").textContent = modoActual === "boomerang" ? "Get ready to move" : "Smile";
+  $("leyenda").textContent = modoActual === "boomerang" ? T().muevete : T().sonrie;
   // The 0/3 counter and progress dots only apply to Photos mode
   const esBoom = modoActual === "boomerang";
   $("contador").style.display = esBoom ? "none" : "";
@@ -298,7 +480,7 @@ document.querySelectorAll(".modo").forEach(b => { b.onclick = () => {
 async function sesionFotos(){
   const fotos = [];
   for (let i = 1; i <= 3; i++){
-    $("leyenda").textContent = `Photo ${i} of 3 — get ready`;
+    $("leyenda").textContent = T().fotoDe(i);
     await cuentaRegresiva(5);
     fotos.push(capturar());
     pintarPuntos(i);
@@ -307,16 +489,16 @@ async function sesionFotos(){
 }
 
 async function sesionBoomerang(){
-  $("leyenda").textContent = "Boomerang — get ready";
+  $("leyenda").textContent = T().boomListo;
   await cuentaRegresiva(3);
-  $("leyenda").textContent = "Move!";
+  $("leyenda").textContent = T().mueve;
   const frames = [];
   for (let i = 0; i < 14; i++){
     frames.push(capturarCanvas(960));
     flashSuave();
     await esperar(90);
   }
-  $("leyenda").textContent = "Creating your boomerang…";
+  $("leyenda").textContent = T().creandoBoom;
   const blob = await renderBoomerang(frames);
   await subirYMostrarQRBoomerang(blob);
 }
@@ -378,39 +560,46 @@ async function subirVideo(blob){
 }
 
 async function subirYMostrarQRBoomerang(blob){
-  $("reintentar").classList.add("oculto");
   try {
-    $("leyenda").textContent = "Uploading…";
+    $("leyenda").textContent = T().subiendo;
     const urlVideo = await subirVideo(blob);
-    const url = BASE + "/galeria.html?v=" + encodeURIComponent(urlVideo) +
-      "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
-      "&neg=" + encodeURIComponent(NEGOCIO.nombre);
-    $("qr").innerHTML = "";
-    new QRCode($("qr"), { text: url, width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
-    mostrar("vista-qr");
+    mostrarQR(urlGaleria("v=" + encodeURIComponent(urlVideo)));
   } catch(e){
-    $("leyenda").textContent = "Upload failed. Check your internet.";
-    $("reintentar").classList.remove("oculto");
-    $("reintentar").onclick = () => subirYMostrarQRBoomerang(blob);
+    await encolarSesion({ tipo: "boomerang", video: blob });
   }
 }
 
 $("obturador").onclick = async () => {
   $("obturador").style.display = "none";
-  $("reintentar").classList.add("oculto");
+  sesionActiva = true;
   try {
     if (modoActual === "boomerang") await sesionBoomerang();
     else await sesionFotos();
   } catch(e){
-    $("leyenda").textContent = "Something went wrong. Try again.";
+    $("leyenda").textContent = T().errorAlgo;
   }
+  sesionActiva = false;
   pintarPuntos(0);
-  $("leyenda").textContent = modoActual === "boomerang" ? "Get ready to move" : "Smile";
+  $("leyenda").textContent = modoActual === "boomerang" ? T().muevete : T().sonrie;
   $("obturador").style.display = "";
-  $("reintentar").classList.add("oculto");
 };
 
 $("otra").onclick = () => mostrar("vista-inicio");
+
+// Language toggle wiring (does not trigger the start screen's tap-to-start)
+document.querySelectorAll("#idiomas button").forEach(b => { b.onclick = e => {
+  e.stopPropagation();
+  idioma = b.dataset.idioma;
+  try { localStorage.setItem("pb-idioma", idioma); } catch(err){}
+  aplicarIdioma();
+}; });
+
+// Init: language + offline queue
+aplicarIdioma();
+$("pendientes").onclick = () => procesarCola();
+procesarCola();
+setInterval(procesarCola, 25000);
+window.addEventListener("online", procesarCola);
 </script>
 </body>
 </html>
