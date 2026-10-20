@@ -14,7 +14,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./estilos.css?v=5">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./estilos.css?v=6">
 <style>
   /* App-specific styles — the theme lives in estilos.css */
   html, body { overflow:hidden; }
@@ -135,25 +136,28 @@
     box-shadow:0 0 12px rgba(255,122,26,.85); }
   body[data-tpl="halloween"] .modo.sel { background:#ff7a1a; border-color:#ff7a1a; color:#1d1030; }
 
-  /* ===== Halloween monster (eats the Start button) ===== */
-  #monstruo { position:fixed; left:50%; top:50%; z-index:8; width:min(76vw, 340px);
-              pointer-events:none; opacity:0;
-              transform:translate(-50%,-44%) scale(0); transform-origin:50% 88%; }
-  #monstruo.aparece { opacity:1; transform:translate(-50%,-44%) scale(1);
-              transition:transform .45s cubic-bezier(.34,1.56,.64,1), opacity .18s; }
-  #monstruo.sale { opacity:0; transform:translate(-50%,-38%) scale(.15);
-              transition:transform .35s ease-in, opacity .3s; }
-  #monstruo.tragando svg { animation:gulp .42s ease; }
-  @keyframes gulp { 0%{ transform:scale(1,1); } 40%{ transform:scale(1.08,.88); } 100%{ transform:scale(1,1); } }
-  #mon-ojo { transition:transform .18s; transform-box:fill-box; transform-origin:center; }
-  #monstruo.tragando #mon-ojo { transform:scaleY(.2); }
-  #mon-boca-cerrada { transition:opacity .12s; }
-  #mon-boca-abierta { opacity:0; transform:scale(.25); transform-box:fill-box;
-              transform-origin:50% 12%; transition:transform .26s ease, opacity .2s; }
-  #monstruo.boca-abierta #mon-boca-abierta { opacity:1; transform:scale(1); }
-  #monstruo.boca-abierta #mon-boca-cerrada { opacity:0; }
-  #vista-inicio .btn-negro.comido { animation:none; opacity:0;
-              transform:translateY(-52px) scale(0); transition:all .38s ease-in; }
+  /* ===== The enchanted pumpkin (Halloween hero) ===== */
+  #calabaza { display:none; }
+  body[data-tpl="halloween"] #calabaza { display:block; position:relative; z-index:5;
+              width:min(54vw, 218px); margin:8px auto 2px;
+              transform-origin:50% 58%; will-change:transform;
+              transition:transform .45s ease; }
+  #calabaza .cara { fill:#ffc531;
+              filter:drop-shadow(0 0 9px rgba(255,138,0,.9)) drop-shadow(0 0 26px rgba(255,90,0,.45));
+              animation:parpadeo-vela 4.4s linear infinite; }
+  @keyframes parpadeo-vela { 0%,100%{ opacity:1; } 3%{ opacity:.5; } 5%{ opacity:1; }
+              38%{ opacity:1; } 40%{ opacity:.68; } 42%{ opacity:1; } 43%{ opacity:.82; }
+              45%{ opacity:1; } 71%{ opacity:.9; } 72%{ opacity:1; } }
+  /* Start pressed: it creeps toward the button, eyes flaring… */
+  #calabaza.acecha { transform:translateY(14px) scale(1.07); }
+  #calabaza.acecha .cara { animation-duration:.8s; }
+  /* …then lunges at the screen until its face fills everything */
+  #calabaza.zoom { transform:translateY(6%) scale(11) rotate(-2deg);
+              transition:transform .58s cubic-bezier(.55,0,.95,.45); }
+  /* Hard cut to black, horror-film style */
+  #corte { position:fixed; inset:0; background:#000; opacity:0; pointer-events:none;
+              z-index:40; transition:opacity .35s ease; }
+  #corte.activo { opacity:1; transition:opacity .06s; }
 </style>
 </head>
 <body>
@@ -163,31 +167,31 @@
 <div id="pantalla">
   <div class="decor-halloween" aria-hidden="true">
     <div class="luna"></div>
-    <svg class="telarana izq" viewBox="0 0 200 200" fill="none" stroke="rgba(240,235,255,.55)" stroke-width="2" stroke-linecap="round">
+    <svg class="telarana izq" viewBox="0 0 200 200" fill="none" stroke="rgba(240,235,255,.55)" stroke-width="1.3" stroke-linecap="round">
       <path d="M2 2 L198 14 M2 2 L172 66 M2 2 L120 132 M2 2 L56 186 M2 2 L8 198"/>
       <path d="M61 6 Q54 16 53 21 Q44 33 37 41 Q26 50 18 57 Q10 60 4 61"/>
       <path d="M110 9 Q100 26 96 37 Q82 56 67 74 Q50 90 32 103 Q18 108 5 110"/>
       <path d="M159 12 Q146 34 138 53 Q118 82 96 106 Q70 128 45 149 Q24 156 7 159"/>
     </svg>
-    <svg class="telarana der" viewBox="0 0 200 200" fill="none" stroke="rgba(240,235,255,.55)" stroke-width="2" stroke-linecap="round">
+    <svg class="telarana der" viewBox="0 0 200 200" fill="none" stroke="rgba(240,235,255,.55)" stroke-width="1.3" stroke-linecap="round">
       <path d="M2 2 L198 14 M2 2 L172 66 M2 2 L120 132 M2 2 L56 186 M2 2 L8 198"/>
       <path d="M61 6 Q54 16 53 21 Q44 33 37 41 Q26 50 18 57 Q10 60 4 61"/>
       <path d="M110 9 Q100 26 96 37 Q82 56 67 74 Q50 90 32 103 Q18 108 5 110"/>
       <path d="M159 12 Q146 34 138 53 Q118 82 96 106 Q70 128 45 149 Q24 156 7 159"/>
     </svg>
-    <div class="arana"><div class="hilo"></div>
-      <svg width="36" height="34" viewBox="0 0 40 38">
-        <g stroke="#17121f" stroke-width="2.4" fill="none" stroke-linecap="round">
-          <path d="M14 16 Q4 12 2 4"/><path d="M13 21 Q3 21 0 15"/>
-          <path d="M13 26 Q4 30 2 36"/><path d="M15 30 Q9 36 8 38"/>
-          <path d="M26 16 Q36 12 38 4"/><path d="M27 21 Q37 21 40 15"/>
-          <path d="M27 26 Q36 30 38 36"/><path d="M25 30 Q31 36 32 38"/>
-        </g>
-        <ellipse cx="20" cy="23" rx="9" ry="10" fill="#17121f"/>
-        <circle cx="20" cy="13" r="5.5" fill="#17121f"/>
-        <circle cx="18" cy="12" r="1.3" fill="#ff3b3b"/><circle cx="22" cy="12" r="1.3" fill="#ff3b3b"/>
+    <div class="murcielago">
+      <svg width="46" height="66" viewBox="0 0 60 84">
+        <path d="M30 4 C39 12 43 24 41.5 42 C40 60 36 72 30 80 C24 72 20 60 18.5 42 C17 24 21 12 30 4 Z" fill="#0a0a10"/>
+        <circle cx="30" cy="70" r="7.5" fill="#0a0a10"/>
+        <path d="M23.5 74 L20 82 L27 77 Z" fill="#0a0a10"/>
+        <path d="M36.5 74 L40 82 L33 77 Z" fill="#0a0a10"/>
+        <circle class="ojo-bat" cx="27" cy="69" r="1.5" fill="#ff2222"/>
+        <circle class="ojo-bat" cx="33" cy="69" r="1.5" fill="#ff2222"/>
       </svg>
     </div>
+    <div class="nube u1"></div>
+    <div class="nube u2"></div>
+    <div class="grano"></div>
     <div class="niebla n1"></div>
     <div class="niebla n2"></div>
   </div>
@@ -202,6 +206,34 @@
       <span class="pastilla pastilla-rosa">Pose &amp; Post</span>
       <h1 class="titular inicio-titulo" data-txt="titulo">Capture your moment<br><span class="degradado-texto">in 3 photos</span></h1>
       <p class="inicio-sub" data-txt="sub">5-second countdown · Strip ready to download</p>
+      <div id="calabaza" aria-hidden="true">
+        <svg viewBox="0 0 320 250">
+          <defs>
+            <radialGradient id="brilloCal" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff8c1a" stop-opacity=".5"/>
+              <stop offset="60%" stop-color="#ff8c1a" stop-opacity=".16"/>
+              <stop offset="100%" stop-color="#ff8c1a" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="160" cy="150" rx="146" ry="102" fill="url(#brilloCal)"/>
+          <ellipse cx="160" cy="240" rx="106" ry="9" fill="rgba(0,0,0,.5)"/>
+          <ellipse cx="160" cy="150" rx="120" ry="88" fill="#7a3405"/>
+          <ellipse cx="108" cy="150" rx="64" ry="84" fill="#93450a"/>
+          <ellipse cx="212" cy="150" rx="64" ry="84" fill="#93450a"/>
+          <ellipse cx="160" cy="150" rx="54" ry="87" fill="#a8520d"/>
+          <path d="M78 80 Q58 150 78 220 M116 66 Q100 150 116 234 M204 66 Q220 150 204 234 M242 80 Q262 150 242 220"
+                stroke="rgba(43,17,0,.35)" stroke-width="3" fill="none"/>
+          <ellipse cx="160" cy="88" rx="84" ry="24" fill="rgba(0,0,0,.16)"/>
+          <path d="M150 70 Q146 40 168 30 Q184 24 190 32 Q182 42 178 66 Q166 78 150 70 Z" fill="#43301a"/>
+          <path d="M158 62 Q156 44 170 36" stroke="rgba(0,0,0,.35)" stroke-width="3" fill="none"/>
+          <g class="cara">
+            <path d="M94 132 L126 102 L140 134 Z"/>
+            <path d="M226 132 L194 102 L180 134 Z"/>
+            <path d="M160 140 L169 156 L151 156 Z"/>
+            <path d="M92 172 L114 160 L128 178 L146 162 L160 180 L176 162 L192 178 L208 160 L228 172 L218 198 L196 188 L174 202 L156 190 L136 202 L116 188 L100 196 Z"/>
+          </g>
+        </svg>
+      </div>
       <p class="inicio-evento oculto" id="inicio-evento"></p>
       <span class="btn-negro" data-txt="empezar">Start →</span>
     </div>
@@ -234,29 +266,7 @@
     <button id="otra" class="btn-negro" data-txt="otra">New session</button>
   </div>
 
-  <div id="monstruo" aria-hidden="true">
-    <svg viewBox="0 0 300 270">
-      <path d="M74 66 Q46 14 88 14 Q102 36 94 64 Z" fill="#ff7518"/>
-      <path d="M226 66 Q254 14 212 14 Q198 36 206 64 Z" fill="#ff7518"/>
-      <path d="M150 34 C214 34 246 88 246 152 C246 208 204 236 150 236 C96 236 54 208 54 152 C54 88 86 34 150 34 Z" fill="#6d28a8"/>
-      <g id="mon-ojo">
-        <circle cx="150" cy="102" r="35" fill="#ffffff"/>
-        <circle cx="150" cy="106" r="15" fill="#22102e"/>
-        <circle cx="156" cy="98" r="5" fill="#ffffff"/>
-      </g>
-      <g id="mon-boca-cerrada">
-        <path d="M104 158 Q150 176 196 158" stroke="#2a0a3a" stroke-width="6" fill="none" stroke-linecap="round"/>
-        <path d="M120 163 L127 177 L135 165 Z" fill="#ffffff"/>
-        <path d="M165 165 L173 177 L180 163 Z" fill="#ffffff"/>
-      </g>
-      <g id="mon-boca-abierta">
-        <ellipse cx="150" cy="184" rx="54" ry="42" fill="#4a0e2e"/>
-        <ellipse cx="150" cy="200" rx="30" ry="14" fill="#b03060"/>
-        <path d="M100 158 L112 182 L124 160 Z M138 166 L150 190 L162 166 Z M176 160 L188 182 L198 156 Z" fill="#ffffff"/>
-        <path d="M124 210 L134 194 L144 212 Z M158 212 L168 194 L178 210 Z" fill="#ffffff"/>
-      </g>
-    </svg>
-  </div>
+  <div id="corte" aria-hidden="true"></div>
 
   <div id="pendientes" class="oculto"></div>
 </div>
@@ -378,25 +388,21 @@ if (EVENTO.nombre.trim()){
   el.classList.remove("oculto");
 }
 
-// Halloween treat: a monster pops out, eats the Start button, and
-// only then does the camera open. The camera request runs in parallel.
-async function animacionMonstruo(){
-  const m = $("monstruo");
-  const btn = document.querySelector("#vista-inicio .btn-negro");
-  m.classList.add("aparece");
-  await esperar(480);
-  m.classList.add("boca-abierta");
-  btn.classList.add("comido");
-  await esperar(430);
-  m.classList.remove("boca-abierta");
-  m.classList.add("tragando");
-  await esperar(440);
-  m.classList.add("sale");
-  await esperar(360);
+// Halloween: the enchanted pumpkin creeps toward the button, its carved
+// face flares up, then it lunges at the screen — hard cut to black —
+// and the camera opens. The camera request runs in parallel.
+async function animacionCalabaza(){
+  const c = $("calabaza");
+  c.classList.add("acecha");
+  await esperar(500);
+  c.classList.add("zoom");
+  await esperar(580);
+  $("corte").classList.add("activo");
+  await esperar(170);
 }
-function resetMonstruo(){
-  $("monstruo").classList.remove("aparece", "boca-abierta", "tragando", "sale");
-  document.querySelector("#vista-inicio .btn-negro").classList.remove("comido");
+function resetCalabaza(){
+  $("calabaza").classList.remove("acecha", "zoom");
+  $("corte").classList.remove("activo");
 }
 
 let iniciando = false;
@@ -414,13 +420,13 @@ $("vista-inicio").onclick = async () => {
   })();
   promCamara.catch(() => {}); // handled below; avoids an unhandled rejection mid-animation
   try {
-    if (esHalloween) await animacionMonstruo();
+    if (esHalloween) await animacionCalabaza();
     await promCamara;
     mostrar("vista-camara");
   } catch (e) {
     alert(T().errorCamara);
   }
-  if (esHalloween) resetMonstruo();
+  if (esHalloween) resetCalabaza();
   iniciando = false;
 };
 
