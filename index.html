@@ -44,10 +44,12 @@
                   padding:20px 52px 20px calc(52px + .12em); font-size:16px;
                   animation:pulso 2.4s ease-in-out infinite; }
   @keyframes pulso { 0%,100% { transform:scale(1); } 50% { transform:scale(1.05); } }
-  /* Baby shower scenes on the landing (soft photo under a light veil) */
+  /* Event scenes on the landing (soft photo under a light veil) */
+  body[data-tpl="boda"] .inicio-fondo { background-image:url("./boda.jpg"); }
   body[data-tpl="baby-nina"] .inicio-fondo { background-image:url("./baby-nina.jpg"); }
   body[data-tpl="baby-nino"] .inicio-fondo { background-image:url("./baby-nino.jpg"); }
   body[data-tpl="baby-shower"] .inicio-fondo { background-image:url("./baby-neutral.jpg"); }
+  body[data-tpl="boda"] .inicio-velo,
   body[data-tpl="baby-nina"] .inicio-velo,
   body[data-tpl="baby-nino"] .inicio-velo,
   body[data-tpl="baby-shower"] .inicio-velo {
@@ -461,7 +463,7 @@ function urlGaleria(extra){
 const DISENOS = [
   { id:"fiesta",      en:"Party",       es:"Fiesta",      img:"./fondo-inicio.jpg" },
   { id:"halloween",   en:"Halloween",   es:"Halloween",   img:"./halloween-escena.jpg" },
-  { id:"boda",        en:"Wedding",     es:"Boda",        grad:"linear-gradient(120deg,#b98a1d,#e8c874)" },
+  { id:"boda",        en:"Wedding",     es:"Boda",        img:"./boda.jpg" },
   { id:"baby-nina",   en:"It's a Girl", es:"Es Niña",     img:"./baby-nina.jpg" },
   { id:"baby-nino",   en:"It's a Boy",  es:"Es Niño",     img:"./baby-nino.jpg" },
   { id:"baby-shower", en:"Baby Shower", es:"Baby Shower", img:"./baby-neutral.jpg" },
