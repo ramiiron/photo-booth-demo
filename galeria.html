@@ -38,9 +38,12 @@
   .mini.noir { background:#0b0b0d; }
 
   /* Strip preview (600:1800 ratio) */
-  .tira { width:200px; aspect-ratio:600/1800; margin:0 auto 26px; padding:12px;
+  .tira { position:relative; width:200px; aspect-ratio:600/1800; margin:0 auto 26px; padding:12px;
           display:flex; flex-direction:column; border-radius:10px;
           box-shadow:var(--sombra); }
+  .tira-marca { position:absolute; right:12px; bottom:10px; font-size:8px; font-weight:800;
+                letter-spacing:.08em; color:#fff; opacity:.85;
+                text-shadow:0 1px 5px rgba(0,0,0,.6); }
   .tira-cabeza { height:26px; display:flex; align-items:center; justify-content:space-between;
                  font-size:8px; font-weight:800; letter-spacing:.14em; }
   .tira-fotos { flex:1; display:flex; flex-direction:column; gap:9px; margin:8px 0; }
@@ -87,6 +90,7 @@
         <div class="tira-cabeza"><span id="tira-cabeza-izq">PHOTO BOOTH</span><span id="tira-cabeza-der">RETRO · 2026</span></div>
         <div class="tira-fotos" id="tira-fotos"></div>
         <div class="tira-pie" id="tira-pie">✦ MEMORIES ✦</div>
+        <div class="tira-marca oculto" id="tira-marca"></div>
       </div>
       <button class="btn-negro" id="descargar-tira">Download strip (PNG)</button>
     </div>
@@ -107,6 +111,7 @@ const $ = id => document.getElementById(id);
 
 // Per-event customization (comes in the QR from the booth config)
 const evNombre = (qs.get("ev") || "").trim();
+const negocio = (qs.get("neg") || "").trim(); // business name for the watermark
 const PLANTILLAS = {
   "fiesta":      { etiqueta: "Your session" },
   "boda":        { etiqueta: "Our wedding" },
@@ -140,16 +145,18 @@ if (!fotos.length){
   $("tira-fotos").innerHTML = fotos.map((f,i) =>
     `<img src="${esc(f)}" alt="Photo ${i+1}" loading="lazy">`).join("");
   $("tira-pie").textContent = evNombre || MARCOS[marcoActual].pie;
+  if (negocio){
+    $("tira-marca").textContent = "© " + negocio;
+    $("tira-marca").classList.remove("oculto");
+  }
 
-  // Individuals (fl_attachment forces download with a good filename)
-  $("gal").innerHTML = fotos.map((f,i) => {
-    const dl = f.replace("/image/upload/", "/image/upload/fl_attachment:photo-booth-" + (i+1) + "/");
-    return `<div class="foto"><img src="${esc(f)}" alt="Photo ${i+1}" loading="lazy"><br>` +
-      `<button class="btn-linea" data-url="${esc(dl)}" data-nombre="photo-booth-${i+1}.jpg">Download</button></div>`;
-  }).join("");
+  // Individuals (watermark composited on a canvas before sharing)
+  $("gal").innerHTML = fotos.map((f,i) =>
+    `<div class="foto"><img src="${esc(f)}" alt="Photo ${i+1}" loading="lazy"><br>` +
+      `<button class="btn-linea" data-idx="${i}" data-nombre="photo-booth-${i+1}.jpg">Download</button></div>`).join("");
   $("gal").addEventListener("click", e => {
-    const b = e.target.closest("button[data-url]");
-    if (b) compartirODescargar(b.dataset.url, b.dataset.nombre, b);
+    const b = e.target.closest("button[data-idx]");
+    if (b) compartirFoto(+b.dataset.idx, b.dataset.nombre, b);
   });
 
   // Tabs
@@ -179,25 +186,57 @@ if (!fotos.length){
   $("descargar-tira").onclick = descargarTira;
 }
 
-// Try the native share sheet (iOS: "Save Image" -> Photos;
-// Android: save -> Gallery). Falls back to traditional download.
-async function compartirODescargar(url, nombre, btn){
-  const orig = btn ? btn.textContent : null;
+// Business watermark: small © name at the bottom-right of the canvas
+function dibujarMarca(x, W, H, tam){
+  if (!negocio) return;
+  x.save();
+  x.globalAlpha = 0.85;
+  x.font = "800 " + tam + "px Montserrat, Arial, sans-serif";
+  x.textAlign = "right";
+  x.textBaseline = "bottom";
+  x.fillStyle = "#fff";
+  x.shadowColor = "rgba(0,0,0,.55)";
+  x.shadowBlur = Math.round(tam * 0.35);
+  x.fillText("© " + negocio, W - tam, H - Math.round(tam * 0.7));
+  x.restore();
+}
+
+// Loads one photo, draws the watermark and returns a JPEG blob
+async function fotoConMarca(url){
+  const img = await cargar(url);
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth || img.width;
+  c.height = img.naturalHeight || img.height;
+  const x = c.getContext("2d");
+  x.drawImage(img, 0, 0);
+  dibujarMarca(x, c.width, c.height, Math.max(22, Math.round(c.width * 0.032)));
+  return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error("blob")), "image/jpeg", 0.92));
+}
+
+// Shares the watermarked photo via the native sheet (iOS: "Save Image"
+// -> Photos; Android: save -> Gallery). Falls back to a download.
+async function compartirFoto(i, nombre, btn){
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Opening…";
   try {
-    const blob = await (await fetch(url)).blob();
-    const file = new File([blob], nombre, { type: blob.type || "image/jpeg" });
+    const blob = await fotoConMarca(fotos[i]);
+    const file = new File([blob], nombre, { type: "image/jpeg" });
     if (navigator.canShare && navigator.canShare({ files: [file] })){
-      if (btn) btn.textContent = "Opening…";
-      await navigator.share({ files: [file], title: "Photo Booth" });
-      if (btn) btn.textContent = orig;
-      return true;
+      try {
+        await navigator.share({ files: [file], title: "Photo Booth" });
+      } catch(e){
+        // Cancelled sheet: do nothing. Other errors: download.
+        if (!e || e.name !== "AbortError") descargarBlob(blob, nombre);
+      }
+    } else {
+      descargarBlob(blob, nombre);
     }
-  } catch(e){ /* sigue a descarga tradicional */ }
-  if (btn) btn.textContent = orig;
-  const a = document.createElement("a");
-  a.href = url; a.download = nombre;
-  document.body.appendChild(a); a.click(); a.remove();
-  return false;
+  } catch(e){
+    alert("Couldn't prepare the photo. Try again.");
+  }
+  btn.textContent = orig;
+  btn.disabled = false;
 }
 
 function cargar(url){
@@ -263,6 +302,8 @@ async function descargarTira(){
       x.fillStyle = M.tinta;
       x.fillText(pieTxt, W / 2, H - pad - pieH / 2);
     }
+
+    dibujarMarca(x, W, H, 20);
 
     const blob = await new Promise(r => c.toBlob(r, "image/png"));
     const file = new File([blob], "tira-photo-booth.png", { type: "image/png" });

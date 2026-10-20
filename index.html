@@ -157,6 +157,11 @@ const EVENTO = {
   plantilla: "fiesta",   // fiesta | boda | baby-shower | cumpleanos | halloween | graduacion
 };
 
+// ===== Business setup (watermark on downloaded photos and strips) =====
+const NEGOCIO = {
+  nombre: "",  // e.g. "Flashbox Studio" ("" = no watermark)
+};
+
 function mostrar(id){
   ["vista-inicio","vista-camara","vista-qr"].forEach(x => $(x).classList.toggle("oculto", x !== id));
 }
@@ -255,7 +260,8 @@ async function subirYMostrarQR(fotos){
       urls.push(await subirFoto(blob, i));
     }
     const url = BASE + "/galeria.html?" + urls.map(u => "f=" + encodeURIComponent(u)).join("&") +
-      "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla);
+      "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
+      "&neg=" + encodeURIComponent(NEGOCIO.nombre);
     $("qr").innerHTML = "";
     new QRCode($("qr"), { text: url, width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
     mostrar("vista-qr");
