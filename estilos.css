@@ -122,6 +122,12 @@ body[data-tpl="halloween"] .fondo-calido.c{ background:radial-gradient(60% 45% a
 body[data-tpl="halloween"] .decor-halloween{ display:block; position:fixed; inset:0;
   z-index:3; pointer-events:none; overflow:hidden; }
 body.en-camara .decor-halloween{ display:none; }
+body.en-inicio .decor-halloween{ display:none; } /* the booth start screen is a full photo scene */
+/* Faint scene photo behind the booth QR screen and the guest gallery */
+body[data-tpl="halloween"] #vista-qr::before{ content:""; position:absolute; inset:0; z-index:-1;
+  background:url("./halloween-escena.jpg") 50% 30%/cover no-repeat; opacity:.30; filter:brightness(.75); }
+body[data-tpl="halloween"] .contenido::before{ content:""; position:fixed; inset:0; z-index:-1;
+  background:url("./halloween-escena.jpg") 50% 22%/cover no-repeat; opacity:.14; filter:brightness(.8); }
 body[data-tpl="halloween"] .titular{ font-family:"Cinzel Decorative","Montserrat",serif;
   letter-spacing:.02em; }
 .luna{ position:absolute; top:30px; left:38px; width:76px; height:76px; border-radius:50%;

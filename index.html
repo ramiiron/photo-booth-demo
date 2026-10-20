@@ -123,11 +123,13 @@
             line-height:1.7; margin-bottom:30px; }
 
   /* ===== Halloween template (booth) ===== */
-  body[data-tpl="halloween"] #vista-inicio {
-    background:radial-gradient(120% 90% at 50% 0%, #241040 0%, #150a26 52%, #0a0514 100%); }
-  body[data-tpl="halloween"] .inicio-fondo { display:none; } /* spooky scene, no party photo */
+  body[data-tpl="halloween"] #vista-inicio { background:#06030c; }
+  body[data-tpl="halloween"] #vista-inicio { align-items:stretch; }
+  body[data-tpl="halloween"] .inicio-contenido { height:100%; justify-content:flex-start;
+    padding:6vh 24px 5.5vh; }
+  body[data-tpl="halloween"] #vista-inicio .btn-negro { margin-top:auto; }
   body[data-tpl="halloween"] .inicio-velo {
-    background:linear-gradient(180deg, rgba(10,5,20,.25), rgba(10,5,20,.05) 40%, rgba(10,5,20,.55)); }
+    background:linear-gradient(180deg, rgba(5,2,10,.58), rgba(5,2,10,.10) 34%, rgba(5,2,10,.16) 62%, rgba(5,2,10,.74)); }
   body[data-tpl="halloween"] #cuenta { color:#ff7a1a;
     text-shadow:0 10px 50px rgba(139,92,246,.65), 0 4px 18px rgba(0,0,0,.6); }
   body[data-tpl="halloween"] #obturador {
@@ -136,24 +138,41 @@
     box-shadow:0 0 12px rgba(255,122,26,.85); }
   body[data-tpl="halloween"] .modo.sel { background:#ff7a1a; border-color:#ff7a1a; color:#1d1030; }
 
-  /* ===== The enchanted pumpkin (Halloween hero) ===== */
-  #calabaza { display:none; }
-  body[data-tpl="halloween"] #calabaza { display:block; position:relative; z-index:5;
-              width:min(54vw, 218px); margin:8px auto 2px;
-              transform-origin:50% 58%; will-change:transform;
-              transition:transform .45s ease; }
-  #calabaza .cara { fill:#ffc531;
-              filter:drop-shadow(0 0 9px rgba(255,138,0,.9)) drop-shadow(0 0 26px rgba(255,90,0,.45));
-              animation:parpadeo-vela 4.4s linear infinite; }
+  /* ===== Halloween scene: a living photo (booth start screen) ===== */
+  #escena { position:absolute; inset:0; z-index:0; }
+  body[data-tpl="halloween"] #escena { will-change:transform; transform-origin:50% 60%;
+    transition:transform .5s ease; }
+  body[data-tpl="halloween"] .inicio-fondo {
+    background-image:url("./halloween-escena.jpg");
+    background-position:50% 62%;
+    filter:brightness(.94) saturate(.94) contrast(1.05);
+    transform:none; }
+  /* Inner fire of the carved face, flickering like a candle */
+  #resplandor { display:none; }
+  body[data-tpl="halloween"] #resplandor { display:block; position:absolute; left:50%; top:60%;
+    width:66vmin; height:66vmin; transform:translate(-50%,-50%); border-radius:50%;
+    background:radial-gradient(circle, rgba(255,130,20,.34), rgba(255,100,0,.12) 45%, transparent 68%);
+    mix-blend-mode:screen; pointer-events:none;
+    animation:parpadeo-vela 4.4s linear infinite; }
   @keyframes parpadeo-vela { 0%,100%{ opacity:1; } 3%{ opacity:.5; } 5%{ opacity:1; }
               38%{ opacity:1; } 40%{ opacity:.68; } 42%{ opacity:1; } 43%{ opacity:.82; }
               45%{ opacity:1; } 71%{ opacity:.9; } 72%{ opacity:1; } }
-  /* Start pressed: it creeps toward the button, eyes flaring… */
-  #calabaza.acecha { transform:translateY(14px) scale(1.07); }
-  #calabaza.acecha .cara { animation-duration:.8s; }
-  /* …then lunges at the screen until its face fills everything */
-  #calabaza.zoom { transform:translateY(6%) scale(11) rotate(-2deg);
-              transition:transform .58s cubic-bezier(.55,0,.95,.45); }
+  /* Film grain over the scene */
+  body[data-tpl="halloween"] #vista-inicio::after { content:""; position:absolute; inset:0;
+    z-index:3; pointer-events:none; opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:grano-mueve .9s steps(4) infinite; }
+  #vista-inicio .inicio-contenido { transition:opacity .3s; }
+  #vista-inicio .inicio-velo { transition:opacity .3s; }
+  /* Start pressed: the scene creeps closer, the fire flares… */
+  body[data-tpl="halloween"] #vista-inicio.acecha #escena { transform:scale(1.06);
+    transition:transform 1.6s ease; }
+  body[data-tpl="halloween"] #vista-inicio.acecha #resplandor { animation-duration:.7s; }
+  /* …then the face lunges at the screen until it fills everything */
+  body[data-tpl="halloween"] #vista-inicio.zoom #escena { transform:scale(7.2);
+    transition:transform .55s cubic-bezier(.55,0,.95,.45); }
+  body[data-tpl="halloween"] #vista-inicio.zoom .inicio-contenido,
+  body[data-tpl="halloween"] #vista-inicio.zoom .inicio-velo { opacity:0; }
   /* Hard cut to black, horror-film style */
   #corte { position:fixed; inset:0; background:#000; opacity:0; pointer-events:none;
               z-index:40; transition:opacity .35s ease; }
@@ -196,7 +215,10 @@
     <div class="niebla n2"></div>
   </div>
   <div id="vista-inicio" role="button" aria-label="Tap to start">
-    <div class="inicio-fondo" aria-hidden="true"></div>
+    <div id="escena" aria-hidden="true">
+      <div class="inicio-fondo"></div>
+      <div id="resplandor"></div>
+    </div>
     <div class="inicio-velo" aria-hidden="true"></div>
     <div id="idiomas">
       <button type="button" data-idioma="en">EN</button>
@@ -206,34 +228,6 @@
       <span class="pastilla pastilla-rosa">Pose &amp; Post</span>
       <h1 class="titular inicio-titulo" data-txt="titulo">Capture your moment<br><span class="degradado-texto">in 3 photos</span></h1>
       <p class="inicio-sub" data-txt="sub">5-second countdown · Strip ready to download</p>
-      <div id="calabaza" aria-hidden="true">
-        <svg viewBox="0 0 320 250">
-          <defs>
-            <radialGradient id="brilloCal" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ff8c1a" stop-opacity=".5"/>
-              <stop offset="60%" stop-color="#ff8c1a" stop-opacity=".16"/>
-              <stop offset="100%" stop-color="#ff8c1a" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <ellipse cx="160" cy="150" rx="146" ry="102" fill="url(#brilloCal)"/>
-          <ellipse cx="160" cy="240" rx="106" ry="9" fill="rgba(0,0,0,.5)"/>
-          <ellipse cx="160" cy="150" rx="120" ry="88" fill="#7a3405"/>
-          <ellipse cx="108" cy="150" rx="64" ry="84" fill="#93450a"/>
-          <ellipse cx="212" cy="150" rx="64" ry="84" fill="#93450a"/>
-          <ellipse cx="160" cy="150" rx="54" ry="87" fill="#a8520d"/>
-          <path d="M78 80 Q58 150 78 220 M116 66 Q100 150 116 234 M204 66 Q220 150 204 234 M242 80 Q262 150 242 220"
-                stroke="rgba(43,17,0,.35)" stroke-width="3" fill="none"/>
-          <ellipse cx="160" cy="88" rx="84" ry="24" fill="rgba(0,0,0,.16)"/>
-          <path d="M150 70 Q146 40 168 30 Q184 24 190 32 Q182 42 178 66 Q166 78 150 70 Z" fill="#43301a"/>
-          <path d="M158 62 Q156 44 170 36" stroke="rgba(0,0,0,.35)" stroke-width="3" fill="none"/>
-          <g class="cara">
-            <path d="M94 132 L126 102 L140 134 Z"/>
-            <path d="M226 132 L194 102 L180 134 Z"/>
-            <path d="M160 140 L169 156 L151 156 Z"/>
-            <path d="M92 172 L114 160 L128 178 L146 162 L160 180 L176 162 L192 178 L208 160 L228 172 L218 198 L196 188 L174 202 L156 190 L136 202 L116 188 L100 196 Z"/>
-          </g>
-        </svg>
-      </div>
       <p class="inicio-evento oculto" id="inicio-evento"></p>
       <span class="btn-negro" data-txt="empezar">Start →</span>
     </div>
@@ -370,8 +364,9 @@ function urlGaleria(extra){
 
 function mostrar(id){
   ["vista-inicio","vista-camara","vista-qr"].forEach(x => $(x).classList.toggle("oculto", x !== id));
-  // Halloween decor stays off the camera screen
+  // Halloween decor stays off the camera screen and off the photo start scene
   document.body.classList.toggle("en-camara", id === "vista-camara");
+  document.body.classList.toggle("en-inicio", id === "vista-inicio");
 }
 function pintarPuntos(n){
   [...$("puntos").children].forEach((s,i) => s.classList.toggle("ok", i < n));
@@ -380,6 +375,7 @@ function pintarPuntos(n){
 
 // Apply the event template to the whole booth (colors + Halloween mode)
 document.body.dataset.tpl = EVENTO.plantilla;
+document.body.classList.add("en-inicio"); // the app always starts on the start screen
 
 // Show the event name on the start screen if set
 if (EVENTO.nombre.trim()){
@@ -388,20 +384,20 @@ if (EVENTO.nombre.trim()){
   el.classList.remove("oculto");
 }
 
-// Halloween: the enchanted pumpkin creeps toward the button, its carved
-// face flares up, then it lunges at the screen — hard cut to black —
-// and the camera opens. The camera request runs in parallel.
-async function animacionCalabaza(){
-  const c = $("calabaza");
-  c.classList.add("acecha");
-  await esperar(500);
-  c.classList.add("zoom");
+// Halloween: the scene itself creeps closer, the pumpkin's fire flares,
+// then its face lunges at the screen — hard cut to black — and the
+// camera opens. The camera request runs in parallel.
+async function animacionEscena(){
+  const v = $("vista-inicio");
+  v.classList.add("acecha");
+  await esperar(950);
+  v.classList.add("zoom");
   await esperar(580);
   $("corte").classList.add("activo");
   await esperar(170);
 }
-function resetCalabaza(){
-  $("calabaza").classList.remove("acecha", "zoom");
+function resetEscena(){
+  $("vista-inicio").classList.remove("acecha", "zoom");
   $("corte").classList.remove("activo");
 }
 
@@ -420,13 +416,13 @@ $("vista-inicio").onclick = async () => {
   })();
   promCamara.catch(() => {}); // handled below; avoids an unhandled rejection mid-animation
   try {
-    if (esHalloween) await animacionCalabaza();
+    if (esHalloween) await animacionEscena();
     await promCamara;
     mostrar("vista-camara");
   } catch (e) {
     alert(T().errorCamara);
   }
-  if (esHalloween) resetCalabaza();
+  if (esHalloween) resetEscena();
   iniciando = false;
 };
 
