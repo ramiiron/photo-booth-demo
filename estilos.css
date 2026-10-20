@@ -109,3 +109,33 @@ body[data-tpl="halloween"] .filtro-g{ background:#241a33; color:#f6f1ff; }
 body[data-tpl="halloween"] .marco.sel{ border-color:#ff7a1a; }
 body[data-tpl="halloween"] .tab{ color:#b9a8d9; }
 body[data-tpl="halloween"] .tab.sel{ background:#f6f1ff; color:#171021; }
+body[data-tpl="halloween"] .btn-negro{ background:var(--degradado); }
+body[data-tpl="halloween"] .pastilla-verde{ background:#2a1b40; color:#ff9a3c; }
+body[data-tpl="halloween"] .fondo-calido.a{ background:radial-gradient(55% 40% at 12% 8%, rgba(139,92,246,.22), transparent 70%); }
+body[data-tpl="halloween"] .fondo-calido.b{ background:radial-gradient(50% 38% at 88% 20%, rgba(255,122,26,.16), transparent 70%); }
+body[data-tpl="halloween"] .fondo-calido.c{ background:radial-gradient(60% 45% at 50% 105%, rgba(90,40,160,.25), transparent 70%); }
+
+/* ----- Halloween decor: moon, cobwebs, hanging spider, fog -----
+   Injected in both pages; only visible with data-tpl="halloween"
+   (and hidden while the booth camera is on screen). */
+.decor-halloween{ display:none; }
+body[data-tpl="halloween"] .decor-halloween{ display:block; position:fixed; inset:0;
+  z-index:3; pointer-events:none; overflow:hidden; }
+body.en-camara .decor-halloween{ display:none; }
+.luna{ position:absolute; top:30px; left:38px; width:76px; height:76px; border-radius:50%;
+  background:radial-gradient(circle at 38% 34%, #fffbe8, #f3e5bb 55%, #e0cd97);
+  box-shadow:0 0 44px 12px rgba(255,244,190,.28), inset -10px -8px 0 rgba(190,170,110,.35); }
+.telarana{ position:absolute; width:190px; height:190px; opacity:.55; }
+.telarana.izq{ top:0; left:0; }
+.telarana.der{ top:0; right:0; transform:scaleX(-1); }
+.arana{ position:absolute; top:0; right:9%; display:flex; flex-direction:column; align-items:center;
+  animation:arana-baja 7s ease-in-out infinite; }
+.arana .hilo{ width:1.5px; height:64px; background:rgba(255,255,255,.5); }
+.arana svg{ filter:drop-shadow(0 0 6px rgba(190,160,255,.5)); }
+@keyframes arana-baja{ 0%,100%{ transform:translateY(-16px); } 50%{ transform:translateY(40px); } }
+.niebla{ position:absolute; width:120%; height:180px; left:-10%; border-radius:50%;
+  background:radial-gradient(50% 50% at 50% 50%, rgba(200,180,255,.13), transparent 70%);
+  filter:blur(10px); }
+.niebla.n1{ bottom:-50px; animation:niebla-va 16s ease-in-out infinite alternate; }
+.niebla.n2{ bottom:26px; animation:niebla-va 23s ease-in-out infinite alternate-reverse; }
+@keyframes niebla-va{ from{ transform:translateX(-4%); } to{ transform:translateX(4%); } }

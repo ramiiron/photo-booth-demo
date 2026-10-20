@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./estilos.css?v=4">
+<link rel="stylesheet" href="./estilos.css?v=5">
 <style>
   /* App-specific styles — the theme lives in estilos.css */
   html, body { overflow:hidden; }
@@ -120,6 +120,40 @@
   #qrbox img, #qrbox canvas, #qrbox table { display:block; }
   .qr-sub { color:var(--tinta-suave); font-size:15px; font-weight:500;
             line-height:1.7; margin-bottom:30px; }
+
+  /* ===== Halloween template (booth) ===== */
+  body[data-tpl="halloween"] #vista-inicio {
+    background:radial-gradient(120% 90% at 50% 0%, #241040 0%, #150a26 52%, #0a0514 100%); }
+  body[data-tpl="halloween"] .inicio-fondo { display:none; } /* spooky scene, no party photo */
+  body[data-tpl="halloween"] .inicio-velo {
+    background:linear-gradient(180deg, rgba(10,5,20,.25), rgba(10,5,20,.05) 40%, rgba(10,5,20,.55)); }
+  body[data-tpl="halloween"] #cuenta { color:#ff7a1a;
+    text-shadow:0 10px 50px rgba(139,92,246,.65), 0 4px 18px rgba(0,0,0,.6); }
+  body[data-tpl="halloween"] #obturador {
+    box-shadow:0 0 0 6px rgba(255,122,26,.4), 0 8px 30px rgba(0,0,0,.45); }
+  body[data-tpl="halloween"] .puntos span.ok {
+    box-shadow:0 0 12px rgba(255,122,26,.85); }
+  body[data-tpl="halloween"] .modo.sel { background:#ff7a1a; border-color:#ff7a1a; color:#1d1030; }
+
+  /* ===== Halloween monster (eats the Start button) ===== */
+  #monstruo { position:fixed; left:50%; top:50%; z-index:8; width:min(76vw, 340px);
+              pointer-events:none; opacity:0;
+              transform:translate(-50%,-44%) scale(0); transform-origin:50% 88%; }
+  #monstruo.aparece { opacity:1; transform:translate(-50%,-44%) scale(1);
+              transition:transform .45s cubic-bezier(.34,1.56,.64,1), opacity .18s; }
+  #monstruo.sale { opacity:0; transform:translate(-50%,-38%) scale(.15);
+              transition:transform .35s ease-in, opacity .3s; }
+  #monstruo.tragando svg { animation:gulp .42s ease; }
+  @keyframes gulp { 0%{ transform:scale(1,1); } 40%{ transform:scale(1.08,.88); } 100%{ transform:scale(1,1); } }
+  #mon-ojo { transition:transform .18s; transform-box:fill-box; transform-origin:center; }
+  #monstruo.tragando #mon-ojo { transform:scaleY(.2); }
+  #mon-boca-cerrada { transition:opacity .12s; }
+  #mon-boca-abierta { opacity:0; transform:scale(.25); transform-box:fill-box;
+              transform-origin:50% 12%; transition:transform .26s ease, opacity .2s; }
+  #monstruo.boca-abierta #mon-boca-abierta { opacity:1; transform:scale(1); }
+  #monstruo.boca-abierta #mon-boca-cerrada { opacity:0; }
+  #vista-inicio .btn-negro.comido { animation:none; opacity:0;
+              transform:translateY(-52px) scale(0); transition:all .38s ease-in; }
 </style>
 </head>
 <body>
@@ -127,6 +161,36 @@
 <script src="./fondo.js"></script>
 
 <div id="pantalla">
+  <div class="decor-halloween" aria-hidden="true">
+    <div class="luna"></div>
+    <svg class="telarana izq" viewBox="0 0 200 200" fill="none" stroke="rgba(240,235,255,.55)" stroke-width="2" stroke-linecap="round">
+      <path d="M2 2 L198 14 M2 2 L172 66 M2 2 L120 132 M2 2 L56 186 M2 2 L8 198"/>
+      <path d="M61 6 Q54 16 53 21 Q44 33 37 41 Q26 50 18 57 Q10 60 4 61"/>
+      <path d="M110 9 Q100 26 96 37 Q82 56 67 74 Q50 90 32 103 Q18 108 5 110"/>
+      <path d="M159 12 Q146 34 138 53 Q118 82 96 106 Q70 128 45 149 Q24 156 7 159"/>
+    </svg>
+    <svg class="telarana der" viewBox="0 0 200 200" fill="none" stroke="rgba(240,235,255,.55)" stroke-width="2" stroke-linecap="round">
+      <path d="M2 2 L198 14 M2 2 L172 66 M2 2 L120 132 M2 2 L56 186 M2 2 L8 198"/>
+      <path d="M61 6 Q54 16 53 21 Q44 33 37 41 Q26 50 18 57 Q10 60 4 61"/>
+      <path d="M110 9 Q100 26 96 37 Q82 56 67 74 Q50 90 32 103 Q18 108 5 110"/>
+      <path d="M159 12 Q146 34 138 53 Q118 82 96 106 Q70 128 45 149 Q24 156 7 159"/>
+    </svg>
+    <div class="arana"><div class="hilo"></div>
+      <svg width="36" height="34" viewBox="0 0 40 38">
+        <g stroke="#17121f" stroke-width="2.4" fill="none" stroke-linecap="round">
+          <path d="M14 16 Q4 12 2 4"/><path d="M13 21 Q3 21 0 15"/>
+          <path d="M13 26 Q4 30 2 36"/><path d="M15 30 Q9 36 8 38"/>
+          <path d="M26 16 Q36 12 38 4"/><path d="M27 21 Q37 21 40 15"/>
+          <path d="M27 26 Q36 30 38 36"/><path d="M25 30 Q31 36 32 38"/>
+        </g>
+        <ellipse cx="20" cy="23" rx="9" ry="10" fill="#17121f"/>
+        <circle cx="20" cy="13" r="5.5" fill="#17121f"/>
+        <circle cx="18" cy="12" r="1.3" fill="#ff3b3b"/><circle cx="22" cy="12" r="1.3" fill="#ff3b3b"/>
+      </svg>
+    </div>
+    <div class="niebla n1"></div>
+    <div class="niebla n2"></div>
+  </div>
   <div id="vista-inicio" role="button" aria-label="Tap to start">
     <div class="inicio-fondo" aria-hidden="true"></div>
     <div class="inicio-velo" aria-hidden="true"></div>
@@ -170,6 +234,30 @@
     <button id="otra" class="btn-negro" data-txt="otra">New session</button>
   </div>
 
+  <div id="monstruo" aria-hidden="true">
+    <svg viewBox="0 0 300 270">
+      <path d="M74 66 Q46 14 88 14 Q102 36 94 64 Z" fill="#ff7518"/>
+      <path d="M226 66 Q254 14 212 14 Q198 36 206 64 Z" fill="#ff7518"/>
+      <path d="M150 34 C214 34 246 88 246 152 C246 208 204 236 150 236 C96 236 54 208 54 152 C54 88 86 34 150 34 Z" fill="#6d28a8"/>
+      <g id="mon-ojo">
+        <circle cx="150" cy="102" r="35" fill="#ffffff"/>
+        <circle cx="150" cy="106" r="15" fill="#22102e"/>
+        <circle cx="156" cy="98" r="5" fill="#ffffff"/>
+      </g>
+      <g id="mon-boca-cerrada">
+        <path d="M104 158 Q150 176 196 158" stroke="#2a0a3a" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M120 163 L127 177 L135 165 Z" fill="#ffffff"/>
+        <path d="M165 165 L173 177 L180 163 Z" fill="#ffffff"/>
+      </g>
+      <g id="mon-boca-abierta">
+        <ellipse cx="150" cy="184" rx="54" ry="42" fill="#4a0e2e"/>
+        <ellipse cx="150" cy="200" rx="30" ry="14" fill="#b03060"/>
+        <path d="M100 158 L112 182 L124 160 Z M138 166 L150 190 L162 166 Z M176 160 L188 182 L198 156 Z" fill="#ffffff"/>
+        <path d="M124 210 L134 194 L144 212 Z M158 212 L168 194 L178 210 Z" fill="#ffffff"/>
+      </g>
+    </svg>
+  </div>
+
   <div id="pendientes" class="oculto"></div>
 </div>
 
@@ -188,7 +276,7 @@ const UPLOAD_PRESET = "photo-booth";
 // The client picks the template when booking; put their name here.
 const EVENTO = {
   nombre: "",            // e.g. "Jennifer's Baby Shower" ("" = no customization)
-  plantilla: "fiesta",   // fiesta | boda | baby-shower | cumpleanos | halloween | graduacion
+  plantilla: "halloween",   // fiesta | boda | baby-shower | cumpleanos | halloween | graduacion
   logo: "",              // optional client logo URL (Cloudinary) shown on the strip
 };
 
@@ -272,11 +360,16 @@ function urlGaleria(extra){
 
 function mostrar(id){
   ["vista-inicio","vista-camara","vista-qr"].forEach(x => $(x).classList.toggle("oculto", x !== id));
+  // Halloween decor stays off the camera screen
+  document.body.classList.toggle("en-camara", id === "vista-camara");
 }
 function pintarPuntos(n){
   [...$("puntos").children].forEach((s,i) => s.classList.toggle("ok", i < n));
   $("contador").textContent = n + "/3";
 }
+
+// Apply the event template to the whole booth (colors + Halloween mode)
+document.body.dataset.tpl = EVENTO.plantilla;
 
 // Show the event name on the start screen if set
 if (EVENTO.nombre.trim()){
@@ -285,18 +378,50 @@ if (EVENTO.nombre.trim()){
   el.classList.remove("oculto");
 }
 
+// Halloween treat: a monster pops out, eats the Start button, and
+// only then does the camera open. The camera request runs in parallel.
+async function animacionMonstruo(){
+  const m = $("monstruo");
+  const btn = document.querySelector("#vista-inicio .btn-negro");
+  m.classList.add("aparece");
+  await esperar(480);
+  m.classList.add("boca-abierta");
+  btn.classList.add("comido");
+  await esperar(430);
+  m.classList.remove("boca-abierta");
+  m.classList.add("tragando");
+  await esperar(440);
+  m.classList.add("sale");
+  await esperar(360);
+}
+function resetMonstruo(){
+  $("monstruo").classList.remove("aparece", "boca-abierta", "tragando", "sale");
+  document.querySelector("#vista-inicio .btn-negro").classList.remove("comido");
+}
+
+let iniciando = false;
 $("vista-inicio").onclick = async () => {
-  try {
+  if (iniciando) return;
+  iniciando = true;
+  const esHalloween = EVENTO.plantilla === "halloween";
+  const promCamara = (async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1440 } },
       audio: false
     });
     video.srcObject = stream;
     await video.play();
+  })();
+  promCamara.catch(() => {}); // handled below; avoids an unhandled rejection mid-animation
+  try {
+    if (esHalloween) await animacionMonstruo();
+    await promCamara;
     mostrar("vista-camara");
   } catch (e) {
-    alert(TXT[idioma].errorCamara);
+    alert(T().errorCamara);
   }
+  if (esHalloween) resetMonstruo();
+  iniciando = false;
 };
 
 function capturarCanvas(anchoMax){
