@@ -100,7 +100,7 @@ body[data-tpl="halloween"]{
   --tinta:#f6f1ff;
   --tinta-suave:#b9a8d9;
   --tarjeta:#241a33;
-  --rosa:#ff7a1a; --naranja:#8b5cf6;
+  --rosa:#ff6a00; --naranja:#ffa62b;
   --sombra:0 18px 45px rgba(0,0,0,.45);
 }
 body[data-tpl="halloween"] .tabs,
@@ -109,3 +109,53 @@ body[data-tpl="halloween"] .filtro-g{ background:#241a33; color:#f6f1ff; }
 body[data-tpl="halloween"] .marco.sel{ border-color:#ff7a1a; }
 body[data-tpl="halloween"] .tab{ color:#b9a8d9; }
 body[data-tpl="halloween"] .tab.sel{ background:#f6f1ff; color:#171021; }
+body[data-tpl="halloween"] .btn-negro{ background:var(--degradado); }
+body[data-tpl="halloween"] .pastilla-verde{ background:#2a1b40; color:#ff9a3c; }
+body[data-tpl="halloween"] .fondo-calido.a{ background:radial-gradient(55% 40% at 12% 8%, rgba(139,92,246,.22), transparent 70%); }
+body[data-tpl="halloween"] .fondo-calido.b{ background:radial-gradient(50% 38% at 88% 20%, rgba(255,122,26,.16), transparent 70%); }
+body[data-tpl="halloween"] .fondo-calido.c{ background:radial-gradient(60% 45% at 50% 105%, rgba(90,40,160,.25), transparent 70%); }
+
+/* ----- Halloween decor: moon, cobwebs, hanging spider, fog -----
+   Injected in both pages; only visible with data-tpl="halloween"
+   (and hidden while the booth camera is on screen). */
+.decor-halloween{ display:none; }
+body[data-tpl="halloween"] .decor-halloween{ display:block; position:fixed; inset:0;
+  z-index:3; pointer-events:none; overflow:hidden; }
+body.en-camara .decor-halloween{ display:none; }
+body.en-inicio .decor-halloween{ display:none; } /* the booth start screen is a full photo scene */
+body.en-disenos .decor-halloween{ display:none; } /* and the design picker stays clean */
+/* Faint scene photo behind the booth QR screen and the guest gallery */
+body[data-tpl="halloween"] #vista-qr::before{ content:""; position:absolute; inset:0; z-index:-1;
+  background:url("./halloween-escena.jpg") 50% 30%/cover no-repeat; opacity:.30; filter:brightness(.75); }
+body[data-tpl="halloween"] .contenido::before{ content:""; position:fixed; inset:0; z-index:-1;
+  background:url("./halloween-escena.jpg") 50% 22%/cover no-repeat; opacity:.14; filter:brightness(.8); }
+body[data-tpl="halloween"] .titular{ font-family:"Cinzel Decorative","Montserrat",serif;
+  letter-spacing:.02em; }
+.luna{ position:absolute; top:30px; left:38px; width:76px; height:76px; border-radius:50%;
+  background:radial-gradient(circle at 38% 34%, #fffbe8, #f3e5bb 55%, #e0cd97);
+  box-shadow:0 0 44px 12px rgba(255,244,190,.28), inset -10px -8px 0 rgba(190,170,110,.35); }
+.nube{ position:absolute; border-radius:50%; background:rgba(5,3,10,.55); filter:blur(9px); }
+.nube.u1{ top:40px; left:2px; width:150px; height:42px;
+  animation:nube-pasa 17s ease-in-out infinite alternate; }
+.nube.u2{ top:84px; left:-34px; width:104px; height:34px;
+  animation:nube-pasa 24s ease-in-out infinite alternate-reverse; }
+@keyframes nube-pasa{ from{ transform:translateX(-12px); } to{ transform:translateX(54px); } }
+.telarana{ position:absolute; width:190px; height:190px; opacity:.38; }
+.telarana.izq{ top:0; left:0; }
+.telarana.der{ top:0; right:0; transform:scaleX(-1); }
+.murcielago{ position:absolute; top:0; right:11%; transform-origin:top center;
+  animation:balanceo 6.5s ease-in-out infinite; }
+@keyframes balanceo{ 0%,100%{ transform:rotate(2.4deg); } 50%{ transform:rotate(-2.4deg); } }
+.ojo-bat{ animation:ojos-parpadeo 5.2s linear infinite; }
+@keyframes ojos-parpadeo{ 0%,91%,100%{ opacity:1; } 94%{ opacity:.05; } }
+.niebla{ position:absolute; width:120%; height:180px; left:-10%; border-radius:50%;
+  background:radial-gradient(50% 50% at 50% 50%, rgba(200,180,255,.13), transparent 70%);
+  filter:blur(10px); }
+.niebla.n1{ bottom:-50px; animation:niebla-va 16s ease-in-out infinite alternate; }
+.niebla.n2{ bottom:26px; animation:niebla-va 23s ease-in-out infinite alternate-reverse; }
+@keyframes niebla-va{ from{ transform:translateX(-4%); } to{ transform:translateX(4%); } }
+.grano{ position:absolute; inset:-70px; opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grano-mueve .9s steps(4) infinite; }
+@keyframes grano-mueve{ 0%{ transform:translate(0,0); } 25%{ transform:translate(-18px,10px); }
+  50%{ transform:translate(12px,-14px); } 75%{ transform:translate(-8px,-8px); } 100%{ transform:translate(0,0); } }
