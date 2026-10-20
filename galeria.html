@@ -24,6 +24,14 @@
          padding:12px 26px; border-radius:999px; cursor:pointer; }
   .tab.sel { background:var(--tinta); color:#fff; }
 
+  /* Filters (applied in the gallery, after scanning the QR) */
+  .filtros { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:26px; }
+  .filtro-g { font-family:inherit; font-size:12px; font-weight:800; letter-spacing:.08em;
+              text-transform:uppercase; background:#fff; color:var(--tinta-suave);
+              border:2px solid transparent; padding:10px 16px; border-radius:999px;
+              cursor:pointer; box-shadow:var(--sombra); }
+  .filtro-g.sel { background:var(--tinta); color:#fff; }
+
   /* Strip frames */
   .marcos { display:flex; gap:10px; justify-content:center; margin-bottom:24px; flex-wrap:wrap; }
   .marco { font-family:inherit; border:2px solid transparent; background:#fff;
@@ -78,6 +86,14 @@
     <div class="tabs">
       <button class="tab sel" id="tab-tira">Strip</button>
       <button class="tab" id="tab-ind">Individuals</button>
+    </div>
+
+    <div class="filtros" id="filtros">
+      <button class="filtro-g sel" data-filtro="original">Original</button>
+      <button class="filtro-g" data-filtro="bn">B&amp;W</button>
+      <button class="filtro-g" data-filtro="sepia">Sepia</button>
+      <button class="filtro-g" data-filtro="vintage">Vintage</button>
+      <button class="filtro-g" data-filtro="vivido">Vivid</button>
     </div>
 
     <div id="vista-tira">
@@ -136,6 +152,23 @@ const MARCOS = {
   noir:    { cabeza:["[RAW_03]",'<span class="rec">● REC</span>'], pie:"CYBER NOIR", fondo:"#0b0b0d", tinta:"#7dff9a", fuente:800, rec:"#ff3b3b" }
 };
 let marcoActual = "retro";
+
+// Filters: applied here in the gallery, after scanning the QR
+// (live preview + baked into the strip PNG and shared photos)
+const FILTROS = {
+  original: "none",
+  bn:       "grayscale(1) contrast(1.08)",
+  sepia:    "sepia(0.85)",
+  vintage:  "sepia(0.35) saturate(1.5) contrast(1.05)",
+  vivido:   "saturate(1.7) contrast(1.12)",
+};
+let filtroActual = "original";
+function fijarFiltro(nombre){
+  filtroActual = FILTROS[nombre] ? nombre : "original";
+  document.querySelectorAll(".filtro-g").forEach(c => c.classList.toggle("sel", c.dataset.filtro === filtroActual));
+  document.querySelectorAll(".tira-fotos img, .foto img").forEach(img => { img.style.filter = FILTROS[filtroActual]; });
+}
+document.querySelectorAll(".filtro-g").forEach(b => { b.onclick = () => fijarFiltro(b.dataset.filtro); });
 
 if (!fotos.length){
   $("sub").innerHTML = "This gallery needs a link with photos.<br>Scan the Photo Booth QR code to see yours.";
@@ -213,7 +246,9 @@ async function fotoConMarca(url){
   c.width = img.naturalWidth || img.width;
   c.height = img.naturalHeight || img.height;
   const x = c.getContext("2d");
+  x.filter = FILTROS[filtroActual];
   x.drawImage(img, 0, 0);
+  x.filter = "none"; // the watermark is drawn unfiltered
   dibujarMarca(x, c.width, c.height, Math.max(22, Math.round(c.width * 0.032)));
   return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error("blob")), "image/jpeg", 0.92));
 }
@@ -300,6 +335,7 @@ async function descargarTira(){
       const dy = pad + cabezaH + i * (fh + gap);
       x.save();
       clipRedondeado(x, pad, dy, fw, fh, 22);
+      x.filter = FILTROS[filtroActual];
       dibujarCover(x, img, pad, dy, fw, fh);
       x.restore();
     });

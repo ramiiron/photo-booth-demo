@@ -104,7 +104,8 @@ body[data-tpl="halloween"]{
   --sombra:0 18px 45px rgba(0,0,0,.45);
 }
 body[data-tpl="halloween"] .tabs,
-body[data-tpl="halloween"] .marco{ background:#241a33; color:#f6f1ff; }
+body[data-tpl="halloween"] .marco,
+body[data-tpl="halloween"] .filtro-g{ background:#241a33; color:#f6f1ff; }
 body[data-tpl="halloween"] .marco.sel{ border-color:#ff7a1a; }
 body[data-tpl="halloween"] .tab{ color:#b9a8d9; }
 body[data-tpl="halloween"] .tab.sel{ background:#f6f1ff; color:#171021; }
