@@ -67,7 +67,7 @@
 
   /* ===== Camera: dark studio HUD ===== */
   #preview { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
-             transform:scaleX(-1) scale(1.25); z-index:2; background:#000; }
+             transform:scaleX(-1) scale(1.4706); z-index:2; background:#000; }
   .hud-arriba { position:fixed; top:0; left:0; right:0; z-index:4;
                 display:flex; justify-content:space-between; align-items:center;
                 padding:22px 22px 46px;
@@ -641,6 +641,7 @@ $("btn-start").onclick = async () => {
   try {
     if (esHalloween) await fundidoNegro();
     await promCamara;
+    aplicarEncuadre(0.16); // medium default until a group size is chosen
     mostrar("vista-camara");
     mostrarPreguntaPose();
   } catch (e) {
@@ -650,11 +651,31 @@ $("btn-start").onclick = async () => {
   iniciando = false;
 };
 
+/* ===== Framing =====
+   The iPad front camera is ultra-wide: at booth distance people fill
+   only a third of the frame and most pixels land on the room. A single
+   center-crop parameter drives BOTH the capture crop and the preview
+   zoom, so what guests see is exactly what the photo gets. The crop
+   adapts to the group size (chosen in the pose guide): tighter for
+   1-2 people, wide for big groups. */
+let recorteLado = 0.16;                    // fraction cropped per side
+let escalaVista = 1 / (1 - 2 * recorteLado); // matching preview zoom
+function aplicarEncuadre(r){
+  recorteLado = r;
+  escalaVista = 1 / (1 - 2 * r);
+  video.style.transform = "scaleX(-1) scale(" + escalaVista + ")";
+}
+function encuadrePara(n){
+  if (n <= 2) return 0.235; // 1-2 people: tight, faces fill the frame
+  if (n === 3) return 0.16; // 3 people: medium
+  return 0.10;              // 4+: wide, like the original framing
+}
+
 function capturarCanvas(anchoMax){
   const c = document.createElement("canvas");
-  // 10% center crop per side: removes the edges, where the front
-  // camera's wide angle distorts the most (fisheye effect)
-  const r = 0.10;
+  // Center crop: removes the edges, where the front camera's wide
+  // angle distorts the most (fisheye effect) — size set by the framing
+  const r = recorteLado;
   const sw = video.videoWidth * (1 - r*2);
   const sh = video.videoHeight * (1 - r*2);
   const sx = video.videoWidth * r;
@@ -957,6 +978,7 @@ function elegirPoses(n){
   poseSesion = { n, lista: set.slice(0, 3) };
   $("pose-chip").textContent = T().poseChip + " · " + (n === 4 ? "4+" : n);
   $("pose-chip").classList.remove("oculto");
+  aplicarEncuadre(encuadrePara(n)); // frame tighter for small groups
   cargarModeloCaras(); // face detection (for silhouette sizing) loads lazily
   iniciarDeteccion();
 }
@@ -984,6 +1006,7 @@ function reiniciarPoses(){
   ocultarPose();
   ocultarPreguntaPose();
   $("pose-chip").classList.add("oculto");
+  aplicarEncuadre(0.16); // back to the medium default framing
   detenerDeteccion();
   ajustePose = null;
   $("pose-img").style.cssText = "";
@@ -1039,9 +1062,9 @@ function detenerDeteccion(){
   if (deteccionTimer){ clearInterval(deteccionTimer); deteccionTimer = null; }
 }
 // Maps a video-frame point to screen CSS pixels. The preview fills the
-// screen (object-fit: cover), is zoomed 1.25x and mirrored horizontally.
+// screen (object-fit: cover), is zoomed by the framing factor and mirrored.
 function puntoPantalla(x, y, vw, vh, W, H){
-  const s = Math.max(W / vw, H / vh) * 1.25;
+  const s = Math.max(W / vw, H / vh) * escalaVista;
   return [ W / 2 - (x - vw / 2) * s, H / 2 + (y - vh / 2) * s ];
 }
 function cajaPantalla(tl, br, vw, vh, W, H){
