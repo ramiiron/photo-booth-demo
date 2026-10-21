@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./estilos.css?v=7">
+<link rel="stylesheet" href="./estilos.css?v=8">
 <style>
   /* App-specific styles — the theme lives in estilos.css */
   html, body { overflow:hidden; }
@@ -165,8 +165,14 @@
   body[data-tpl="halloween"] #vista-inicio { background:#06030c; }
   body[data-tpl="halloween"] #vista-inicio { align-items:stretch; }
   body[data-tpl="halloween"] .inicio-contenido { height:100%; justify-content:flex-start;
+    display:flex; flex-direction:column; align-items:center;
     padding:6vh 24px 4.2vh; }
-  body[data-tpl="halloween"] #vista-inicio .btn-negro { margin-top:auto; }
+  body[data-tpl="halloween"] #vista-inicio .btn-negro { margin-top:auto; order:5; }
+  /* Halloween only: the event name goes big and gothic, BELOW the Start button */
+  body[data-tpl="halloween"] .inicio-evento { order:6; margin:22px 0 0;
+    font-family:"Cinzel Decorative","Montserrat",serif; font-weight:700;
+    font-size:clamp(26px,6.2vw,42px); letter-spacing:.06em; line-height:1.15;
+    color:#f6f1ff; text-shadow:0 0 24px rgba(255,106,0,.45), 0 2px 14px rgba(0,0,0,.65); }
   body[data-tpl="halloween"] .inicio-velo {
     background:linear-gradient(180deg, rgba(5,2,10,.58), rgba(5,2,10,.10) 34%, rgba(5,2,10,.16) 62%, rgba(5,2,10,.74)); }
   body[data-tpl="halloween"] #cuenta { color:#ff7a1a;
