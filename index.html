@@ -460,7 +460,7 @@ function aplicarIdioma(){
 // Gallery URL with the event config (name, template, business, language, logo)
 function urlGaleria(extra){
   return BASE + "/galeria.html?" + extra +
-    "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
+    "&ev=" + encodeURIComponent(EVENTO.plantilla === "halloween" ? EVENTO.nombre : "") + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
     "&neg=" + encodeURIComponent(NEGOCIO.nombre) + "&lang=" + idioma +
     (EVENTO.logo ? "&logo=" + encodeURIComponent(EVENTO.logo) : "");
 }
@@ -494,6 +494,7 @@ function elegirDiseno(id){
   document.body.dataset.tpl = id;
   try { localStorage.setItem("pb-plantilla", id); } catch(e){}
   marcarDisenoSel();
+  aplicarNombre();
   mostrar("vista-inicio");
 }
 
@@ -520,12 +521,16 @@ document.body.classList.add("en-disenos"); // the picker is the default first sc
 pintarDisenos();
 if (tplGuardada) mostrar("vista-inicio");
 
-// Show the event name on the start screen if set
-if (EVENTO.nombre.trim()){
+// The event name belongs to ONE event (the ward Halloween party): it is
+// shown on the landing and sent to the guest gallery ONLY while the
+// Halloween design is active. Any other design shows no name.
+function aplicarNombre(){
+  const mostrarNombre = EVENTO.plantilla === "halloween" && !!EVENTO.nombre.trim();
   const el = $("inicio-evento");
-  el.textContent = EVENTO.nombre.trim();
-  el.classList.remove("oculto");
+  el.textContent = mostrarNombre ? EVENTO.nombre.trim() : "";
+  el.classList.toggle("oculto", !mostrarNombre);
 }
+aplicarNombre();
 
 // Halloween: no tricks — everything fades to black, then the camera
 // opens. The camera request runs in parallel.
