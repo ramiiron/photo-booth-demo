@@ -667,10 +667,92 @@ function capturarCanvas(anchoMax){
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
   return c;
 }
-function capturar(){
-  const c = capturarCanvas(1600);
+/* ===== Capture quality =====
+   A single frame from a live stream is often soft (people move and
+   laugh). At each shot we grab a short burst of 3 frames, keep the
+   sharpest, and apply a gentle enhancement (contrast, saturation,
+   unsharp mask). Everything is best-effort: any failure falls back to
+   the plain capture. */
+// Sharpness score of a grayscale buffer: variance of the Laplacian
+function puntajeNitidez(gris, w, h){
+  let suma = 0, suma2 = 0, n = 0;
+  for (let y = 1; y < h - 1; y++){
+    for (let x = 1; x < w - 1; x++){
+      const i = y * w + x;
+      const lap = 4 * gris[i] - gris[i - 1] - gris[i + 1] - gris[i - w] - gris[i + w];
+      suma += lap; suma2 += lap * lap; n++;
+    }
+  }
+  if (!n) return 0;
+  const media = suma / n;
+  return suma2 / n - media * media;
+}
+// Downscaled grayscale copy of a canvas, used only for scoring
+function grisReducido(canvas){
+  const w = 320, h = Math.max(2, Math.round(320 * canvas.height / canvas.width));
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.drawImage(canvas, 0, 0, w, h);
+  const d = ctx.getImageData(0, 0, w, h).data;
+  const gris = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++){
+    gris[i] = d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114;
+  }
+  return { gris, w, h };
+}
+// Gentle enhancement baked into the photo before it is encoded
+function mejorarFoto(canvas){
+  try {
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width, h = canvas.height;
+    const img = ctx.getImageData(0, 0, w, h);
+    const d = img.data;
+    // 1) Mild contrast + saturation
+    const k = 1.06, s = 1.09;
+    for (let i = 0; i < d.length; i += 4){
+      let r = (d[i]     - 128) * k + 128;
+      let g = (d[i + 1] - 128) * k + 128;
+      let b = (d[i + 2] - 128) * k + 128;
+      const l = 0.299 * r + 0.587 * g + 0.114 * b;
+      d[i]     = l + (r - l) * s;
+      d[i + 1] = l + (g - l) * s;
+      d[i + 2] = l + (b - l) * s;
+    }
+    // 2) Unsharp mask against a 3x3 gaussian blur, modest amount
+    const src = new Uint8ClampedArray(d);
+    const amt = 0.32, w4 = w * 4;
+    for (let y = 1; y < h - 1; y++){
+      for (let x = 1; x < w - 1; x++){
+        const i = (y * w + x) * 4;
+        for (let ch = 0; ch < 3; ch++){
+          const j = i + ch;
+          const blur = (src[j - w4 - 4] + 2 * src[j - w4] + src[j - w4 + 4]
+                      + 2 * src[j - 4]  + 4 * src[j]      + 2 * src[j + 4]
+                      + src[j + w4 - 4] + 2 * src[j + w4] + src[j + w4 + 4]) / 16;
+          d[j] = src[j] + amt * (src[j] - blur);
+        }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  } catch(e){ /* enhancement is best-effort */ }
+  return canvas;
+}
+async function capturar(){
   flashFuerte();
-  return c.toDataURL("image/jpeg", 0.9);
+  let mejor = null, mejorPuntaje = -1;
+  for (let i = 0; i < 3; i++){
+    const c = capturarCanvas(1600);
+    try {
+      const g = grisReducido(c);
+      const p = puntajeNitidez(g.gris, g.w, g.h);
+      if (p > mejorPuntaje){ mejorPuntaje = p; mejor = c; }
+    } catch(e){ mejor = c; break; }
+    if (i < 2) await esperar(90);
+  }
+  if (!mejor) mejor = capturarCanvas(1600);
+  mejorarFoto(mejor);
+  return mejor.toDataURL("image/jpeg", 0.92);
 }
 function flashFuerte(){
   const f = $("flash");
@@ -1033,7 +1115,7 @@ async function sesionFotos(){
     mostrarPose(i - 1);
     await cuentaRegresiva(5);
     ocultarPose();
-    fotos.push(capturar());
+    fotos.push(await capturar());
     pintarPuntos(i);
   }
   await subirYMostrarQR(fotos);
