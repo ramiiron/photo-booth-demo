@@ -151,6 +151,39 @@
   #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none;
            z-index:6; transition:opacity .45s; }
 
+  /* ===== Pose guide ===== */
+  #pose-capa { position:fixed; inset:0; z-index:3; display:flex; flex-direction:column;
+               align-items:center; justify-content:center; pointer-events:none;
+               padding:64px 18px 170px; }
+  #pose-img { max-height:100%; max-width:94%; object-fit:contain; opacity:.5;
+              transform:scaleX(-1); /* mirrored, like the preview */
+              filter:drop-shadow(0 6px 24px rgba(0,0,0,.45)); }
+  #pose-nombre { margin-top:14px; background:var(--degradado); color:#fff; font-weight:800;
+                 font-size:17px; padding:10px 22px; border-radius:999px; text-align:center;
+                 box-shadow:0 10px 26px rgba(0,0,0,.35); }
+  #pose-chip { position:fixed; top:88px; left:50%; transform:translateX(-50%); z-index:5;
+               background:rgba(18,14,24,.66); color:#fff; cursor:pointer;
+               border:1.5px solid rgba(255,255,255,.35); border-radius:999px;
+               backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+               padding:8px 16px; font-family:inherit; font-size:13px; font-weight:700; }
+  #pose-pregunta { position:fixed; left:0; right:0; bottom:0; z-index:8;
+                   padding:18px 18px 30px; display:flex; justify-content:center; }
+  .pose-tarjeta { background:rgba(18,14,24,.85); border-radius:24px; padding:22px;
+                  border:1.5px solid rgba(255,255,255,.22); width:100%; max-width:430px;
+                  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+                  box-shadow:0 24px 60px rgba(0,0,0,.5); text-align:center; }
+  .pose-tit { color:#fff; font-size:20px; font-weight:800; margin-bottom:16px; }
+  .pose-btns { display:flex; flex-direction:column; gap:10px; }
+  .pose-tarjeta .btn-negro { background:var(--degradado); color:#fff; width:100%; }
+  .pose-tarjeta .pose-no { color:#fff; border-color:rgba(255,255,255,.55);
+                           background:transparent; width:100%; }
+  .pose-nums { display:flex; gap:10px; justify-content:center; }
+  .pose-nums button { font-family:inherit; width:62px; height:62px; border-radius:20px;
+                      border:1.5px solid rgba(255,255,255,.35); cursor:pointer;
+                      background:rgba(255,255,255,.12); color:#fff;
+                      font-size:22px; font-weight:800; transition:transform .15s ease; }
+  .pose-nums button:active { transform:scale(.94); }
+
   /* ===== QR ===== */
   .centro { position:relative; z-index:2; padding:32px 24px; width:100%;
             max-height:100%; overflow-y:auto; }
@@ -346,6 +379,34 @@
     <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
   </div>
 
+  <!-- Pose guide: a big silhouette guests fit themselves into -->
+  <div id="pose-capa" class="oculto">
+    <img id="pose-img" alt="">
+    <div id="pose-nombre"></div>
+  </div>
+  <button id="pose-chip" class="oculto"></button>
+  <!-- Asked once when the camera opens: guided poses or freestyle -->
+  <div id="pose-pregunta" class="oculto">
+    <div class="pose-tarjeta">
+      <div id="pose-paso1">
+        <p class="pose-tit" data-txt="posePregunta">Want a pose idea?</p>
+        <div class="pose-btns">
+          <button class="btn-negro pose-si" id="pose-si" data-txt="poseSi">Yes, guide us!</button>
+          <button class="btn-linea pose-no" id="pose-no" data-txt="poseNo">No, freestyle</button>
+        </div>
+      </div>
+      <div id="pose-paso2" class="oculto">
+        <p class="pose-tit" data-txt="poseCuantos">How many people?</p>
+        <div class="pose-nums">
+          <button data-n="1">1</button>
+          <button data-n="2">2</button>
+          <button data-n="3">3</button>
+          <button data-n="4">4+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="cuenta">5</div>
   <div id="flash"></div>
 
@@ -405,6 +466,11 @@ const TXT = {
     otra: "New session",
     sonrie: "Smile",
     muevete: "Get ready to move",
+    posePregunta: "Want a pose idea?",
+    poseSi: "Yes, guide us!",
+    poseNo: "No, freestyle",
+    poseCuantos: "How many people?",
+    poseChip: "Poses on",
     fotoDe: i => `Photo ${i} of 3 — get ready`,
     boomListo: "Boomerang — get ready",
     mueve: "Move!",
@@ -430,6 +496,11 @@ const TXT = {
     otra: "Nueva sesión",
     sonrie: "Sonríe",
     muevete: "Prepárate para moverte",
+    posePregunta: "¿Quieren una pose guiada?",
+    poseSi: "¡Sí, guíanos!",
+    poseNo: "No, estilo libre",
+    poseCuantos: "¿Cuántas personas son?",
+    poseChip: "Poses activas",
     fotoDe: i => `Foto ${i} de 3 — prepárate`,
     boomListo: "Boomerang — prepárate",
     mueve: "¡Muévete!",
@@ -561,6 +632,7 @@ $("btn-start").onclick = async () => {
     if (esHalloween) await fundidoNegro();
     await promCamara;
     mostrar("vista-camara");
+    mostrarPreguntaPose();
   } catch (e) {
     alert(T().errorCamara);
   }
@@ -744,13 +816,96 @@ document.querySelectorAll(".modo").forEach(b => { b.onclick = () => {
   const esBoom = modoActual === "boomerang";
   $("contador").style.display = esBoom ? "none" : "";
   $("puntos").style.display = esBoom ? "none" : "";
+  // Guided poses belong to Photos mode only
+  if (esBoom){ ocultarPreguntaPose(); $("pose-chip").classList.add("oculto"); }
+  else {
+    if (poseSesion) $("pose-chip").classList.remove("oculto");
+    else mostrarPreguntaPose();
+  }
 }; });
+
+/* ===== Pose guide =====
+   When the camera opens we ask once: guided poses or freestyle? If guided,
+   the guests tell us how many people they are (1, 2, 3, 4+) and each photo
+   of the session gets a different random silhouette from that set, shown
+   big and mirrored during the countdown so they can fit themselves into
+   it. The silhouette is a screen layer only: it never reaches the photo. */
+const POSES = [
+  { id:"rocky",     n:1, en:"Arms up, champion!",      es:"¡Brazos arriba, campeón!" },
+  { id:"disco",     n:1, en:"Disco point!",            es:"¡A bailar disco!" },
+  { id:"chaplin",   n:1, en:"Chaplin style",           es:"Estilo Chaplin" },
+  { id:"peace",     n:1, en:"Double peace",            es:"¡Doble paz!" },
+  { id:"heart-up",  n:1, en:"Heart over your head",    es:"¡Corazón sobre la cabeza!" },
+  { id:"titanic",   n:2, en:"Titanic!",                es:"¡Titanic!" },
+  { id:"agents",    n:2, en:"Secret agents",           es:"¡Agentes secretos!" },
+  { id:"duel",      n:2, en:"Finger-gun duel",         es:"¡Duelo de dedos!" },
+  { id:"hug",       n:2, en:"Big hug!",                es:"¡Abrazo fuerte!" },
+  { id:"dance",     n:2, en:"Dance twirl",             es:"¡A bailar!" },
+  { id:"heart2",    n:2, en:"One heart, two people",   es:"¡Un corazón entre dos!" },
+  { id:"wise",      n:3, en:"The three wise ones",     es:"¡Los tres sabios!" },
+  { id:"party3",    n:3, en:"Party hands up!",         es:"¡Manos arriba de fiesta!" },
+  { id:"shoulders", n:3, en:"Best friends",            es:"¡Mejores amigos!" },
+  { id:"highfive3", n:3, en:"High-five chain",         es:"¡Cadena de choca-cinco!" },
+  { id:"serious3",  n:3, en:"Too cool",                es:"¡Demasiado serios!" },
+  { id:"abbey",     n:4, en:"Crossing the street",     es:"¡Cruzando la calle!" },
+  { id:"celeb",     n:4, en:"Celebration!",            es:"¡A celebrar!" },
+  { id:"wave",      n:4, en:"The wave",                es:"¡La ola!" },
+  { id:"formal",    n:4, en:"Formal portrait",         es:"¡Retrato formal!" },
+  { id:"highfive4", n:4, en:"All hands in!",           es:"¡Todos a chocar!" },
+];
+let poseSesion = null; // { n, lista:[pose x3] } while guided poses are on
+
+function elegirPoses(n){
+  const set = POSES.filter(p => p.n === n);
+  // Shuffle and take 3: one different pose per photo, never repeated
+  for (let i = set.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [set[i], set[j]] = [set[j], set[i]];
+  }
+  poseSesion = { n, lista: set.slice(0, 3) };
+  $("pose-chip").textContent = T().poseChip + " · " + (n === 4 ? "4+" : n);
+  $("pose-chip").classList.remove("oculto");
+}
+function mostrarPreguntaPose(){
+  if (modoActual !== "fotos" || poseSesion) return;
+  $("pose-paso1").classList.remove("oculto");
+  $("pose-paso2").classList.add("oculto");
+  $("pose-pregunta").classList.remove("oculto");
+}
+function ocultarPreguntaPose(){ $("pose-pregunta").classList.add("oculto"); }
+function mostrarPose(i){
+  if (!poseSesion) return;
+  const p = poseSesion.lista[i];
+  if (!p) return;
+  $("pose-img").src = "./poses/" + p.id + ".png";
+  $("pose-nombre").textContent = p[idioma] || p.en;
+  $("pose-capa").classList.remove("oculto");
+}
+function ocultarPose(){ $("pose-capa").classList.add("oculto"); }
+function reiniciarPoses(){
+  poseSesion = null;
+  ocultarPose();
+  ocultarPreguntaPose();
+  $("pose-chip").classList.add("oculto");
+}
+$("pose-si").onclick = () => {
+  $("pose-paso1").classList.add("oculto");
+  $("pose-paso2").classList.remove("oculto");
+};
+$("pose-no").onclick = () => ocultarPreguntaPose();
+document.querySelectorAll(".pose-nums button").forEach(b => { b.onclick = () => {
+  elegirPoses(parseInt(b.dataset.n, 10));
+  ocultarPreguntaPose();
+}; });
+$("pose-chip").onclick = () => { reiniciarPoses(); mostrarPreguntaPose(); };
 
 async function sesionFotos(){
   const fotos = [];
   for (let i = 1; i <= 3; i++){
     $("leyenda").textContent = T().fotoDe(i);
+    mostrarPose(i - 1);
     await cuentaRegresiva(5);
+    ocultarPose();
     fotos.push(capturar());
     pintarPuntos(i);
   }
@@ -854,7 +1009,7 @@ $("obturador").onclick = async () => {
   $("obturador").style.display = "";
 };
 
-$("otra").onclick = () => mostrar("vista-inicio");
+$("otra").onclick = () => { reiniciarPoses(); mostrar("vista-inicio"); };
 
 // Language toggle wiring (does not trigger the start screen's tap-to-start)
 document.querySelectorAll("#idiomas button").forEach(b => { b.onclick = e => {
