@@ -159,7 +159,8 @@
                padding:70px 12px 6px; }
   #pose-img { height:min(84vh, 100%); max-width:96%; object-fit:contain; opacity:.5;
               transform:scaleX(-1); /* mirrored, like the preview */
-              filter:drop-shadow(0 6px 24px rgba(0,0,0,.45)); }
+              filter:drop-shadow(0 6px 24px rgba(0,0,0,.45));
+              transition:height .35s ease, top .35s ease, left .35s ease; }
   #pose-nombre { position:absolute; top:64px; left:50%; transform:translateX(-50%);
                  background:var(--degradado); color:#fff; font-weight:800; white-space:nowrap;
                  font-size:17px; padding:10px 22px; border-radius:999px; text-align:center;
@@ -874,6 +875,8 @@ function elegirPoses(n){
   poseSesion = { n, lista: set.slice(0, 3) };
   $("pose-chip").textContent = T().poseChip + " · " + (n === 4 ? "4+" : n);
   $("pose-chip").classList.remove("oculto");
+  cargarModeloCaras(); // face detection (for silhouette sizing) loads lazily
+  iniciarDeteccion();
 }
 function mostrarPreguntaPose(){
   if (modoActual !== "fotos" || poseSesion) return;
@@ -886,9 +889,12 @@ function mostrarPose(i){
   if (!poseSesion) return;
   const p = poseSesion.lista[i];
   if (!p) return;
-  $("pose-img").src = "./poses/" + p.id + ".png";
+  const img = $("pose-img");
+  img.onload = () => aplicarAjustePose();
+  img.src = "./poses/" + p.id + ".png";
   $("pose-nombre").textContent = p[idioma] || p.en;
   $("pose-capa").classList.remove("oculto");
+  aplicarAjustePose();
 }
 function ocultarPose(){ $("pose-capa").classList.add("oculto"); }
 function reiniciarPoses(){
@@ -896,6 +902,9 @@ function reiniciarPoses(){
   ocultarPose();
   ocultarPreguntaPose();
   $("pose-chip").classList.add("oculto");
+  detenerDeteccion();
+  ajustePose = null;
+  $("pose-img").style.cssText = "";
 }
 $("pose-si").onclick = () => {
   $("pose-paso1").classList.add("oculto");
@@ -907,6 +916,114 @@ document.querySelectorAll(".pose-nums button").forEach(b => { b.onclick = () => 
   ocultarPreguntaPose();
 }; });
 $("pose-chip").onclick = () => { reiniciarPoses(); mostrarPreguntaPose(); };
+
+/* ===== Face detection: size the silhouette to the real people =====
+   BlazeFace (TensorFlow.js) loads lazily from CDN the first time guided
+   poses are chosen. Every ~0.4s it reads the faces in a small copy of the
+   video frame; from the face boxes we derive how tall the people are on
+   screen and glide the silhouette so its head lands on theirs. It only
+   MEASURES — counting people stays manual. If the model cannot load or
+   no face is found, the fixed-size silhouette remains as the fallback. */
+let modeloCaras = null, cargandoModelo = false;
+let deteccionTimer = null, detectando = false;
+let ajustePose = null; // { h, top, cx } in CSS px, smoothed
+let ultimaCaraEn = 0;
+const canvasDet = document.createElement("canvas");
+const ctxDet = canvasDet.getContext("2d");
+
+function cargarModeloCaras(){
+  if (modeloCaras || cargandoModelo || !document.head) return;
+  cargandoModelo = true;
+  const s1 = document.createElement("script");
+  s1.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js";
+  s1.onload = () => {
+    const s2 = document.createElement("script");
+    s2.src = "https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js";
+    s2.onload = async () => {
+      try { modeloCaras = await window.blazeface.load(); } catch(e){}
+      cargandoModelo = false;
+    };
+    s2.onerror = () => { cargandoModelo = false; };
+    document.head.appendChild(s2);
+  };
+  s1.onerror = () => { cargandoModelo = false; };
+  document.head.appendChild(s1);
+}
+function iniciarDeteccion(){
+  if (deteccionTimer) return;
+  deteccionTimer = setInterval(() => { detectarCaras(); }, 420);
+}
+function detenerDeteccion(){
+  if (deteccionTimer){ clearInterval(deteccionTimer); deteccionTimer = null; }
+}
+// Maps a video-frame point to screen CSS pixels. The preview fills the
+// screen (object-fit: cover), is zoomed 1.25x and mirrored horizontally.
+function puntoPantalla(x, y, vw, vh, W, H){
+  const s = Math.max(W / vw, H / vh) * 1.25;
+  return [ W / 2 - (x - vw / 2) * s, H / 2 + (y - vh / 2) * s ];
+}
+function cajaPantalla(tl, br, vw, vh, W, H){
+  const a = puntoPantalla(tl[0], tl[1], vw, vh, W, H);
+  const b = puntoPantalla(br[0], br[1], vw, vh, W, H);
+  return { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]),
+           y0: Math.min(a[1], b[1]), y1: Math.max(a[1], b[1]) };
+}
+async function detectarCaras(){
+  if (detectando || !modeloCaras || !poseSesion) return;
+  if ($("vista-camara").classList.contains("oculto")) return;
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) return;
+  detectando = true;
+  try {
+    const cw = 256, ch = Math.max(2, Math.round(256 * vh / vw));
+    if (canvasDet.width !== cw || canvasDet.height !== ch){ canvasDet.width = cw; canvasDet.height = ch; }
+    ctxDet.drawImage(video, 0, 0, cw, ch);
+    const caras = await modeloCaras.estimateFaces(canvasDet, false);
+    const W = window.innerWidth, H = window.innerHeight;
+    const fx = vw / cw, fy = vh / ch;
+    const cajas = (caras || [])
+      .map(c => cajaPantalla([c.topLeft[0] * fx, c.topLeft[1] * fy],
+                             [c.bottomRight[0] * fx, c.bottomRight[1] * fy], vw, vh, W, H))
+      .filter(b => (b.x1 - b.x0) > 18);
+    if (!cajas.length){
+      // No faces for a while: fall back to the fixed-size silhouette
+      if (ajustePose && Date.now() - ultimaCaraEn > 1600){ ajustePose = null; aplicarAjustePose(); }
+      return;
+    }
+    ultimaCaraEn = Date.now();
+    const caraH = cajas.reduce((a, b) => a + (b.y1 - b.y0), 0) / cajas.length;
+    const topMin = Math.min(...cajas.map(b => b.y0));
+    const cx = (Math.min(...cajas.map(b => b.x0)) + Math.max(...cajas.map(b => b.x1))) / 2;
+    // A face box is roughly 1/10 of the person's on-screen height
+    let h = Math.max(H * 0.34, Math.min(H * 0.97, caraH * 10.2));
+    // The HEAD anchor wins: if the person is close, their feet are out of
+    // frame anyway, so the silhouette may extend past the bottom edge
+    let top = topMin - caraH * 0.38 - h * 0.015; // head starts above the face box
+    top = Math.max(top, -h * 0.05);
+    const destino = { h, top, cx };
+    ajustePose = ajustePose ? {
+      h:   ajustePose.h   + (destino.h   - ajustePose.h)   * 0.4,
+      top: ajustePose.top + (destino.top - ajustePose.top) * 0.4,
+      cx:  ajustePose.cx  + (destino.cx  - ajustePose.cx)  * 0.4,
+    } : destino;
+    aplicarAjustePose();
+  } catch(e){ /* detection is best-effort only */ }
+  detectando = false;
+}
+function aplicarAjustePose(){
+  const img = $("pose-img");
+  if (!ajustePose){ img.style.cssText = ""; return; }
+  if ($("pose-capa").classList.contains("oculto")) return;
+  const aspect = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 0.7;
+  const w = ajustePose.h * aspect;
+  const W = window.innerWidth;
+  let left = ajustePose.cx - w / 2;
+  left = Math.max(-w * 0.15, Math.min(W - w * 0.85, left));
+  img.style.position = "absolute";
+  img.style.height = ajustePose.h + "px";
+  img.style.top = ajustePose.top + "px";
+  img.style.left = left + "px";
+}
 
 async function sesionFotos(){
   ocultarPreguntaPose(); // shooting starts: the question card goes away
