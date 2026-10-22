@@ -496,6 +496,7 @@ const TXT = {
     poseCuantos: "How many people?",
     poseChip: "Poses on",
     fotoDe: i => `Photo ${i} of 3 — get ready`,
+    mantenPose: "Hold your pose!",
     boomListo: "Boomerang — get ready",
     mueve: "Move!",
     creandoBoom: "Creating your boomerang…",
@@ -526,6 +527,7 @@ const TXT = {
     poseCuantos: "¿Cuántas personas son?",
     poseChip: "Poses activas",
     fotoDe: i => `Foto ${i} de 3 — prepárate`,
+    mantenPose: "¡Mantén la pose!",
     boomListo: "Boomerang — prepárate",
     mueve: "¡Muévete!",
     creandoBoom: "Creando tu boomerang…",
@@ -1228,6 +1230,20 @@ function nikonCerrarSesion(){
 function enfocarPuente(){
   fetch("/enfocar", { cache: "no-store" }).catch(() => {});
 }
+async function cuentaNikon(alUltimo){
+  // The Nikon's shutter has a pipeline (WiFi + digiCamControl + the
+  // camera stepping out of live view), so the capture command fires
+  // at the START of the last second: the exposure lands on zero,
+  // while everyone is still posing, instead of seconds after it.
+  const cuenta = $("cuenta");
+  cuenta.style.display = "flex";
+  for (let n = 5; n >= 1; n--){
+    cuenta.textContent = n;
+    if (n === 1 && alUltimo) alUltimo();
+    await esperar(1000);
+  }
+  cuenta.style.display = "none";
+}
 async function sesionFotosNikon(){
   ocultarPreguntaPose(); // shooting starts: the question card goes away
   try {
@@ -1236,12 +1252,18 @@ async function sesionFotosNikon(){
       mostrarPose(i - 1);
       enfocarPuente(); // AF starts with the countdown...
       const repite = setTimeout(enfocarPuente, 2500); // ...and re-checks halfway
-      await cuentaRegresiva(5);
+      let promDisparo = null;
+      await cuentaNikon(() => { promDisparo = puente("/disparar").catch(() => null); });
       clearTimeout(repite);
-      ocultarPose();
-      flashFuerte();
-      const d = await puente("/disparar").catch(() => null);
+      // The count is over but the shutter may still be landing: the
+      // guests HOLD the pose (the silhouette stays up) until the
+      // bridge confirms the photo exists — only then does the flash
+      // tell them it is done. Flashing at zero would lie to them.
+      $("leyenda").textContent = T().mantenPose;
+      const d = await (promDisparo || puente("/disparar").catch(() => null));
       if (!d || !d.ok) throw new Error("disparo");
+      ocultarPose();
+      flashFuerte(); // confirmed: this flash means "got it"
       pintarPuntos(i); // no review: straight to the next countdown
     }
   } catch(e) {
