@@ -1208,16 +1208,27 @@ async function puente(ruta){
   const r = await fetch(ruta, { cache: "no-store" });
   return r.json();
 }
-let feedTimer = null;
+let feedActivo = false, feedCargando = false;
 function feedStart(){
-  if (feedTimer) return;
+  if (feedActivo) return;
+  feedActivo = true;
   const img = $("feed");
-  const tick = () => { img.src = "/feed.jpg?r=" + Date.now(); };
-  tick();
-  feedTimer = setInterval(tick, 600);
+  // Fast chained polling: the next frame is requested the moment
+  // the previous one lands (40 ms gap), so the preview runs at
+  // whatever rate digiCamControl can serve frames, instead of a
+  // fixed slow cadence with requests piling up behind each other.
+  const paso = () => {
+    if (!feedActivo || feedCargando) return;
+    feedCargando = true;
+    const t = new Image();
+    t.onload = () => { img.src = t.src; feedCargando = false; if (feedActivo) setTimeout(paso, 40); };
+    t.onerror = () => { feedCargando = false; if (feedActivo) setTimeout(paso, 250); };
+    t.src = "/feed.jpg?r=" + Date.now();
+  };
+  paso();
 }
 function feedStop(){
-  if (feedTimer){ clearInterval(feedTimer); feedTimer = null; }
+  feedActivo = false;
 }
 async function nikonIniciarSesion(){
   await puente("/sesion"); // bridge: show the live view on the PC + reset the session
