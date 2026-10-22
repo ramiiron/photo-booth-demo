@@ -1028,8 +1028,8 @@ function elegirPoses(n){
   $("pose-chip").textContent = T().poseChip + " · " + (n === 4 ? "4+" : n);
   $("pose-chip").classList.remove("oculto");
   aplicarEncuadre(encuadrePara(n)); // frame tighter for small groups
-  cargarModeloCaras(); // face detection (for silhouette sizing) loads lazily
-  iniciarDeteccion();
+  // The silhouette is FIXED (waist-up): no face detection is needed
+  // while poses are on. Detection only serves freestyle framing.
 }
 function mostrarPreguntaPose(){
   if (modoActual !== "fotos" || poseSesion) return;
@@ -1057,7 +1057,6 @@ function reiniciarPoses(){
   $("pose-chip").classList.add("oculto");
   aplicarEncuadre(0.16); // back to the medium default framing
   detenerDeteccion();
-  ajustePose = null;
   $("pose-img").style.cssText = "";
 }
 $("pose-si").onclick = () => {
@@ -1084,17 +1083,14 @@ function pintarChipRapido(){
 }
 $("rapido-chip").onclick = () => { modoRapido = !modoRapido; pintarChipRapido(); };
 
-/* ===== Face detection: size the silhouette to the real people =====
-   BlazeFace (TensorFlow.js) loads lazily from CDN the first time guided
-   poses are chosen. Every ~0.4s it reads the faces in a small copy of the
-   video frame; from the face boxes we derive how tall the people are on
-   screen and glide the silhouette so its head lands on theirs. It only
-   MEASURES — counting people stays manual. If the model cannot load or
-   no face is found, the fixed-size silhouette remains as the fallback. */
+/* ===== Face detection: freestyle framing only =====
+   The pose silhouette is FIXED (waist-up, sized by the people count),
+   so detection no longer measures people. BlazeFace (TensorFlow.js)
+   loads lazily from CDN only in FREESTYLE, where the face COUNT picks
+   the framing (after 3 identical reads). Counting for poses stays
+   manual — the guests tap how many they are. */
 let modeloCaras = null, cargandoModelo = false;
 let deteccionTimer = null, detectando = false;
-let ajustePose = null; // { h, top, cx } in CSS px, smoothed
-let ultimaCaraEn = 0;
 const canvasDet = document.createElement("canvas");
 const ctxDet = canvasDet.getContext("2d");
 
@@ -1169,51 +1165,35 @@ async function detectarCaras(){
       .map(c => cajaPantalla([c.topLeft[0] * fx, c.topLeft[1] * fy],
                              [c.bottomRight[0] * fx, c.bottomRight[1] * fy], vw, vh, W, H))
       .filter(b => (b.x1 - b.x0) > 18);
-    if (!cajas.length){
-      // No faces for a while: fall back to the fixed-size silhouette
-      if (ajustePose && Date.now() - ultimaCaraEn > 1600){ ajustePose = null; aplicarAjustePose(); }
-      return;
-    }
-    ultimaCaraEn = Date.now();
+    if (!cajas.length) return;
     if (!poseSesion){
-      // Freestyle: no silhouette to size — the face COUNT auto-frames
-      // instead, and only while waiting (never mid-session, so a set
-      // of photos keeps a single framing).
+      // Freestyle: the face COUNT auto-frames, and only while waiting
+      // (never mid-session, so a set of photos keeps a single framing).
       if (!sesionActiva) contarParaEncuadre(cajas.length);
-      return;
     }
-    const caraH = cajas.reduce((a, b) => a + (b.y1 - b.y0), 0) / cajas.length;
-    const topMin = Math.min(...cajas.map(b => b.y0));
-    const cx = (Math.min(...cajas.map(b => b.x0)) + Math.max(...cajas.map(b => b.x1))) / 2;
-    // A face box is roughly 1/10 of the person's on-screen height
-    let h = Math.max(H * 0.34, Math.min(H * 0.97, caraH * 10.2));
-    // The HEAD anchor wins: if the person is close, their feet are out of
-    // frame anyway, so the silhouette may extend past the bottom edge
-    let top = topMin - caraH * 0.38 - h * 0.015; // head starts above the face box
-    top = Math.max(top, -h * 0.05);
-    const destino = { h, top, cx };
-    ajustePose = ajustePose ? {
-      h:   ajustePose.h   + (destino.h   - ajustePose.h)   * 0.4,
-      top: ajustePose.top + (destino.top - ajustePose.top) * 0.4,
-      cx:  ajustePose.cx  + (destino.cx  - ajustePose.cx)  * 0.4,
-    } : destino;
-    aplicarAjustePose();
+    // With poses on there is nothing to measure: the silhouette is fixed.
   } catch(e){ /* detection is best-effort only */ }
   finally { detectando = false; } // the early returns above must never wedge detection
 }
 function aplicarAjustePose(){
+  // FIXED waist-up silhouette (Ramiro's call, Oct 22): the pictograms
+  // are full-body, but only the top ~55% is shown — the legs fall
+  // below the frame, matching how the photos actually frame people.
+  // The size depends only on the people count: bigger for solos,
+  // smaller for groups. No face detection, no drift, no surprises.
   const img = $("pose-img");
-  if (!ajustePose){ img.style.cssText = ""; return; }
+  if (!poseSesion) return;
   if ($("pose-capa").classList.contains("oculto")) return;
+  const W = window.innerWidth, H = window.innerHeight;
+  const ALTOS = { 1: 1.52, 2: 1.42, 3: 1.30, 4: 1.20 }; // pictogram height × screen height
+  let h = H * (ALTOS[poseSesion.n] || 1.35);
   const aspect = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 0.7;
-  const w = ajustePose.h * aspect;
-  const W = window.innerWidth;
-  let left = ajustePose.cx - w / 2;
-  left = Math.max(-w * 0.15, Math.min(W - w * 0.85, left));
+  let w = h * aspect;
+  if (aspect < 1.1 && w > W * 1.04){ w = W * 1.04; h = w / aspect; } // solos/duos stay in frame; wide groups may bleed at the sides, like a real group photo
   img.style.position = "absolute";
-  img.style.height = ajustePose.h + "px";
-  img.style.top = ajustePose.top + "px";
-  img.style.left = left + "px";
+  img.style.height = h + "px";
+  img.style.top = (H * 0.05) + "px"; // heads (and raised arms) start near the top
+  img.style.left = ((W - w) / 2) + "px";
 }
 
 /* ===== Nikon mode: a session shot by the DSLR through the bridge =====
