@@ -68,6 +68,14 @@
   /* ===== Camera: dark studio HUD ===== */
   #preview { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
              transform:scaleX(-1) scale(1.4706); z-index:2; background:#000; }
+  /* Nikon mode: the camera is the DSLR live-view feed (an <img> the
+     bridge refreshes), shown mirrored like the front camera, full
+     frame — the framing is the lens's own, no digital crop/zoom. */
+  #feed { position:fixed; inset:0; width:100%; height:100%; object-fit:cover;
+          transform:scaleX(-1); z-index:2; background:#000; display:none; }
+  body.modo-nikon #feed { display:block; }
+  body.modo-nikon #preview { display:none; }
+  body.modo-nikon #modos { display:none; } /* photos only: no boomerang over USB */
   .hud-arriba { position:fixed; top:0; left:0; right:0; z-index:4;
                 display:flex; justify-content:space-between; align-items:center;
                 padding:22px 22px 46px;
@@ -369,6 +377,7 @@
 
   <div id="vista-camara" class="oculto">
     <video id="preview" playsinline muted autoplay></video>
+    <img id="feed" alt="">
     <div class="hud-arriba">
       <span class="envivo"><span class="punto-rojo"></span><span data-txt="enVivo">Live</span></span>
       <span class="contador" id="contador">0/3</span>
@@ -433,6 +442,17 @@ const $ = id => document.getElementById(id);
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 const video = $("preview");
 const BASE = location.href.replace(/\/[^/]*$/, "");
+
+// ===== Nikon mode =====
+// Set by the PC bridge (puente-nikon.ps1) when IT serves this app on
+// the local network: the camera is then a Nikon DSLR tethered to the
+// PC, and the bridge fires the shutter. Absent on GitHub Pages, where
+// the app runs on the iPad's own camera exactly as before.
+const MODO_NIKON = window.PB_MODO_NIKON === true;
+if (MODO_NIKON) document.body.classList.add("modo-nikon");
+// In Nikon mode the app is served from a LAN address, but the guest
+// gallery must stay on the public site (guests open it on their phones)
+const BASE_PUBLICA = "https://ramiiron.github.io/photo-booth-demo";
 
 // ===== Cloudinary setup (unsigned uploads, designed for the browser) =====
 const CLOUD_NAME = "lubasdf9";
@@ -534,7 +554,7 @@ function aplicarIdioma(){
 
 // Gallery URL with the event config (name, template, business, language, logo)
 function urlGaleria(extra){
-  return BASE + "/galeria.html?" + extra +
+  return (MODO_NIKON ? BASE_PUBLICA : BASE) + "/galeria.html?" + extra +
     "&ev=" + encodeURIComponent(EVENTO.plantilla === "halloween" ? EVENTO.nombre : "") + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
     "&neg=" + encodeURIComponent(NEGOCIO.nombre) + "&lang=" + idioma +
     (EVENTO.logo ? "&logo=" + encodeURIComponent(EVENTO.logo) : "");
@@ -629,6 +649,21 @@ $("btn-start").onclick = async () => {
   if (iniciando) return;
   iniciando = true;
   const esHalloween = EVENTO.plantilla === "halloween";
+  if (MODO_NIKON){
+    // No device camera here: the bridge turns the Nikon's live view
+    // on (on the PC) and this screen shows its feed.
+    try {
+      if (esHalloween) await fundidoNegro();
+      await nikonIniciarSesion();
+      mostrar("vista-camara");
+      mostrarPreguntaPose();
+    } catch (e) {
+      alert(T().errorAlgo);
+    }
+    if (esHalloween) resetCorte();
+    iniciando = false;
+    return;
+  }
   const promCamara = (async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1440 } },
@@ -661,6 +696,7 @@ $("btn-start").onclick = async () => {
 let recorteLado = 0.16;                    // fraction cropped per side
 let escalaVista = 1 / (1 - 2 * recorteLado); // matching preview zoom
 function aplicarEncuadre(r){
+  if (MODO_NIKON){ recorteLado = 0; escalaVista = 1; return; } // Nikon framing is physical (lens/position)
   recorteLado = r;
   escalaVista = 1 / (1 - 2 * r);
   video.style.transform = "scaleX(-1) scale(" + escalaVista + ")";
@@ -1095,13 +1131,15 @@ function cajaPantalla(tl, br, vw, vh, W, H){
 async function detectarCaras(){
   if (detectando || !modeloCaras) return;
   if ($("vista-camara").classList.contains("oculto")) return;
-  const vw = video.videoWidth, vh = video.videoHeight;
+  const fuenteDet = MODO_NIKON ? $("feed") : video;
+  const vw = MODO_NIKON ? fuenteDet.naturalWidth : video.videoWidth;
+  const vh = MODO_NIKON ? fuenteDet.naturalHeight : video.videoHeight;
   if (!vw || !vh) return;
   detectando = true;
   try {
     const cw = 256, ch = Math.max(2, Math.round(256 * vh / vw));
     if (canvasDet.width !== cw || canvasDet.height !== ch){ canvasDet.width = cw; canvasDet.height = ch; }
-    ctxDet.drawImage(video, 0, 0, cw, ch);
+    ctxDet.drawImage(fuenteDet, 0, 0, cw, ch);
     const caras = await modeloCaras.estimateFaces(canvasDet, false);
     const W = window.innerWidth, H = window.innerHeight;
     const fx = vw / cw, fy = vh / ch;
@@ -1119,7 +1157,7 @@ async function detectarCaras(){
       // Freestyle: no silhouette to size — the face COUNT auto-frames
       // instead, and only while waiting (never mid-session, so a set
       // of photos keeps a single framing).
-      if (estado === "espera") contarParaEncuadre(cajas.length);
+      if (!sesionActiva) contarParaEncuadre(cajas.length);
       return;
     }
     const caraH = cajas.reduce((a, b) => a + (b.y1 - b.y0), 0) / cajas.length;
@@ -1139,7 +1177,7 @@ async function detectarCaras(){
     } : destino;
     aplicarAjustePose();
   } catch(e){ /* detection is best-effort only */ }
-  detectando = false;
+  finally { detectando = false; } // the early returns above must never wedge detection
 }
 function aplicarAjustePose(){
   const img = $("pose-img");
@@ -1156,7 +1194,85 @@ function aplicarAjustePose(){
   img.style.left = left + "px";
 }
 
+/* ===== Nikon mode: a session shot by the DSLR through the bridge =====
+   Same flow as the iPad session (pose question, 5 s countdowns, QR at
+   the end) with three differences: focusing runs DURING each countdown
+   (the bridge is told to focus when the count starts and again halfway,
+   so at zero the camera only fires), there is NO per-photo review (the
+   next countdown starts as soon as the shot is taken), and uploads
+   finish in the background on the PC — the gallery is polled from the
+   bridge once the third photo is in. */
+async function puente(ruta){
+  const r = await fetch(ruta, { cache: "no-store" });
+  return r.json();
+}
+let feedTimer = null;
+function feedStart(){
+  if (feedTimer) return;
+  const img = $("feed");
+  const tick = () => { img.src = "/feed.jpg?r=" + Date.now(); };
+  tick();
+  feedTimer = setInterval(tick, 600);
+}
+function feedStop(){
+  if (feedTimer){ clearInterval(feedTimer); feedTimer = null; }
+}
+async function nikonIniciarSesion(){
+  await puente("/sesion"); // bridge: show the live view on the PC + reset the session
+  feedStart();
+}
+function nikonCerrarSesion(){
+  feedStop();
+  fetch("/ocultar", { cache: "no-store" }).catch(() => {}); // bridge: hide the live view on the PC
+}
+function enfocarPuente(){
+  fetch("/enfocar", { cache: "no-store" }).catch(() => {});
+}
+async function sesionFotosNikon(){
+  ocultarPreguntaPose(); // shooting starts: the question card goes away
+  try {
+    for (let i = 1; i <= 3; i++){
+      $("leyenda").textContent = T().fotoDe(i);
+      mostrarPose(i - 1);
+      enfocarPuente(); // AF starts with the countdown...
+      const repite = setTimeout(enfocarPuente, 2500); // ...and re-checks halfway
+      await cuentaRegresiva(5);
+      clearTimeout(repite);
+      ocultarPose();
+      flashFuerte();
+      const d = await puente("/disparar").catch(() => null);
+      if (!d || !d.ok) throw new Error("disparo");
+      pintarPuntos(i); // no review: straight to the next countdown
+    }
+  } catch(e) {
+    nikonCerrarSesion();
+    throw e;
+  }
+  await galeriaFinalNikon();
+}
+async function galeriaFinalNikon(){
+  $("leyenda").textContent = T().subiendo;
+  const limite = Date.now() + 90000;
+  let fotos = [];
+  while (Date.now() < limite){
+    const d = await puente("/galeria-final?n=3").catch(() => null);
+    if (d && d.fotos){
+      fotos = d.fotos;
+      if (fotos.length) $("leyenda").textContent = T().subiendoFotos(Math.min(fotos.length, 3));
+      if (d.listo) break;
+    }
+    await esperar(1500);
+  }
+  nikonCerrarSesion();
+  if (fotos.length){
+    mostrarQR(urlGaleria(fotos.map(u => "f=" + encodeURIComponent(u)).join("&")));
+  } else {
+    $("leyenda").textContent = T().errorAlgo;
+  }
+}
+
 async function sesionFotos(){
+  if (MODO_NIKON) return sesionFotosNikon();
   ocultarPreguntaPose(); // shooting starts: the question card goes away
   const fotos = [];
   for (let i = 1; i <= 3; i++){
@@ -1268,7 +1384,7 @@ $("obturador").onclick = async () => {
   $("obturador").style.display = "";
 };
 
-$("otra").onclick = () => { reiniciarPoses(); mostrar("vista-inicio"); };
+$("otra").onclick = () => { if (MODO_NIKON) nikonCerrarSesion(); reiniciarPoses(); mostrar("vista-inicio"); };
 
 // Language toggle wiring (does not trigger the start screen's tap-to-start)
 document.querySelectorAll("#idiomas button").forEach(b => { b.onclick = e => {
