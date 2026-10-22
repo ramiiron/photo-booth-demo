@@ -538,13 +538,19 @@ const NEGOCIO = {
 // The operator can change the event name/tag, the countdown and the
 // photos per session without touching code; it persists per device.
 let fotosPorSesion = 3, segundosCuenta = 5;
+// The event name belongs to the TEMPLATE being edited (Ramiro's rule):
+// each design keeps its own name, and the landing/gallery show the
+// name of the design currently active — never another design's.
+const NOMBRES = { halloween: "Barrio Rushton View 5th" };
 try {
   const AJ = JSON.parse(localStorage.getItem("pb-ajustes") || "{}");
   if (AJ.fotos === 3 || AJ.fotos === 4) fotosPorSesion = AJ.fotos;
   if (AJ.cuenta === 3 || AJ.cuenta === 5) segundosCuenta = AJ.cuenta;
-  if (typeof AJ.nombre === "string") EVENTO.nombre = AJ.nombre;
+  if (AJ.nombres && typeof AJ.nombres === "object") Object.assign(NOMBRES, AJ.nombres);
+  else if (typeof AJ.nombre === "string") NOMBRES.halloween = AJ.nombre; // saves from the first panel version kept the name on Halloween
   if (typeof AJ.id === "string" && AJ.id) EVENTO.id = AJ.id;
 } catch(e){}
+function nombreActivo(){ return NOMBRES[EVENTO.plantilla] || ""; }
 
 // ===== Language: EN/ES toggle on the start screen, saved on this iPad =====
 let idioma = "en";
@@ -658,7 +664,7 @@ function aplicarIdioma(){
 // Gallery URL with the event config (name, template, business, language, logo)
 function urlGaleria(extra){
   return (MODO_NIKON ? BASE_PUBLICA : BASE) + "/galeria.html?" + extra +
-    "&ev=" + encodeURIComponent(EVENTO.plantilla === "halloween" ? EVENTO.nombre : "") + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
+    "&ev=" + encodeURIComponent(EVENTO.nombre) + "&tpl=" + encodeURIComponent(EVENTO.plantilla) +
     "&neg=" + encodeURIComponent(NEGOCIO.nombre) + "&lang=" + idioma +
     (EVENTO.logo ? "&logo=" + encodeURIComponent(EVENTO.logo) : "");
 }
@@ -689,6 +695,7 @@ function marcarDisenoSel(){
 }
 function elegirDiseno(id){
   EVENTO.plantilla = id;
+  EVENTO.nombre = nombreActivo();
   document.body.dataset.tpl = id;
   try { localStorage.setItem("pb-plantilla", id); } catch(e){}
   marcarDisenoSel();
@@ -722,16 +729,17 @@ const PLANTILLAS_OK = ["fiesta","boda","baby-shower","baby-nina","baby-nino","cu
 let tplGuardada = null;
 try { tplGuardada = localStorage.getItem("pb-plantilla"); } catch(e){}
 if (PLANTILLAS_OK.includes(tplGuardada)) EVENTO.plantilla = tplGuardada;
+EVENTO.nombre = nombreActivo();
 document.body.dataset.tpl = EVENTO.plantilla;
 document.body.classList.add("en-disenos"); // the picker is the default first screen
 pintarDisenos();
 if (tplGuardada) mostrar("vista-inicio");
 
-// The event name belongs to ONE event (the ward Halloween party): it is
-// shown on the landing and sent to the guest gallery ONLY while the
-// Halloween design is active. Any other design shows no name.
+// The event name belongs to the ACTIVE design: it is set per template
+// in the operator panel, shown on that design's landing and sent to
+// its guest gallery. Other designs keep their own name (or none).
 function aplicarNombre(){
-  const mostrarNombre = EVENTO.plantilla === "halloween" && !!EVENTO.nombre.trim();
+  const mostrarNombre = !!EVENTO.nombre.trim();
   const el = $("inicio-evento");
   el.textContent = mostrarNombre ? EVENTO.nombre.trim() : "";
   el.classList.toggle("oculto", !mostrarNombre);
@@ -1206,7 +1214,7 @@ $("op-fotos-3").onclick = () => { opFotos = 3; pintarSegOp(); };
 $("op-fotos-4").onclick = () => { opFotos = 4; pintarSegOp(); };
 $("btn-operador").onclick = (e) => {
   e.stopPropagation();
-  $("op-nombre").value = EVENTO.nombre;
+  $("op-nombre").value = nombreActivo();
   $("op-id").value = EVENTO.id;
   opCuenta = segundosCuenta; opFotos = fotosPorSesion;
   pintarSegOp();
@@ -1215,11 +1223,12 @@ $("btn-operador").onclick = (e) => {
 $("op-cerrar").onclick = () => $("panel-operador").classList.add("oculto");
 $("op-guardar").onclick = () => {
   const id = $("op-id").value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/^-+|-+$/g, "");
-  EVENTO.nombre = $("op-nombre").value.trim();
+  NOMBRES[EVENTO.plantilla] = $("op-nombre").value.trim(); // the name is saved on the design being edited
+  EVENTO.nombre = nombreActivo();
   if (id) EVENTO.id = id;
   segundosCuenta = opCuenta;
   fotosPorSesion = opFotos;
-  try { localStorage.setItem("pb-ajustes", JSON.stringify({ nombre: EVENTO.nombre, id: EVENTO.id, cuenta: segundosCuenta, fotos: fotosPorSesion })); } catch(e){}
+  try { localStorage.setItem("pb-ajustes", JSON.stringify({ nombres: NOMBRES, id: EVENTO.id, cuenta: segundosCuenta, fotos: fotosPorSesion })); } catch(e){}
   aplicarNombre();
   pintarTextosInicio();
   pintarPuntos(0);
