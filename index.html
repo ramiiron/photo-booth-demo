@@ -178,6 +178,12 @@
                border:1.5px solid rgba(255,255,255,.35); border-radius:999px;
                backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
                padding:8px 16px; font-family:inherit; font-size:13px; font-weight:700; }
+  #rapido-chip { position:fixed; top:66px; left:50%; transform:translateX(-50%); z-index:5;
+               background:rgba(18,14,24,.66); color:#fff; cursor:pointer;
+               border:1.5px solid rgba(255,255,255,.35); border-radius:999px;
+               backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+               padding:8px 16px; font-family:inherit; font-size:13px; font-weight:700; }
+  #rapido-chip.sel { background:var(--degradado); border-color:transparent; }
   #pose-pregunta { position:fixed; left:0; right:0; bottom:0; z-index:8;
                    padding:18px 18px 30px; display:flex; justify-content:center; }
   .pose-tarjeta { background:rgba(18,14,24,.85); border-radius:24px; padding:22px;
@@ -398,6 +404,7 @@
     <div id="pose-nombre"></div>
   </div>
   <button id="pose-chip" class="oculto"></button>
+  <button id="rapido-chip" class="oculto"></button>
   <!-- Asked once when the camera opens: guided poses or freestyle -->
   <div id="pose-pregunta" class="oculto">
     <div class="pose-tarjeta">
@@ -497,6 +504,8 @@ const TXT = {
     poseChip: "Poses on",
     fotoDe: i => `Photo ${i} of 3 — get ready`,
     mantenPose: "Hold your pose!",
+    rapido: on => `Rapid photos · ${on ? "ON" : "OFF"}`,
+    otraFoto: "Another one!",
     boomListo: "Boomerang — get ready",
     mueve: "Move!",
     creandoBoom: "Creating your boomerang…",
@@ -528,6 +537,8 @@ const TXT = {
     poseChip: "Poses activas",
     fotoDe: i => `Foto ${i} de 3 — prepárate`,
     mantenPose: "¡Mantén la pose!",
+    rapido: on => `Fotos rápidas · ${on ? "ON" : "OFF"}`,
+    otraFoto: "¡Otra más!",
     boomListo: "Boomerang — prepárate",
     mueve: "¡Muévete!",
     creandoBoom: "Creando tu boomerang…",
@@ -1026,7 +1037,7 @@ function mostrarPreguntaPose(){
   $("pose-paso2").classList.add("oculto");
   $("pose-pregunta").classList.remove("oculto");
 }
-function ocultarPreguntaPose(){ $("pose-pregunta").classList.add("oculto"); }
+function ocultarPreguntaPose(){ $("pose-pregunta").classList.add("oculto"); $("rapido-chip").classList.add("oculto"); }
 function mostrarPose(i){
   if (!poseSesion) return;
   const p = poseSesion.lista[i];
@@ -1063,6 +1074,15 @@ document.querySelectorAll(".pose-nums button").forEach(b => { b.onclick = () => 
   ocultarPreguntaPose();
 }; });
 $("pose-chip").onclick = () => { reiniciarPoses(); mostrarPreguntaPose(); };
+
+// Rapid fire (Nikon mode only): photos 2 and 3 skip the countdown.
+let modoRapido = false;
+function pintarChipRapido(){
+  const chip = $("rapido-chip");
+  chip.textContent = T().rapido(modoRapido);
+  chip.classList.toggle("sel", modoRapido);
+}
+$("rapido-chip").onclick = () => { modoRapido = !modoRapido; pintarChipRapido(); };
 
 /* ===== Face detection: size the silhouette to the real people =====
    BlazeFace (TensorFlow.js) loads lazily from CDN the first time guided
@@ -1232,10 +1252,13 @@ function feedStop(){
 }
 async function nikonIniciarSesion(){
   await puente("/sesion"); // bridge: show the live view on the PC + reset the session
+  pintarChipRapido();
+  $("rapido-chip").classList.remove("oculto"); // the rapid-fire toggle lives on the camera view
   feedStart();
 }
 function nikonCerrarSesion(){
   feedStop();
+  $("rapido-chip").classList.add("oculto");
   fetch("/ocultar", { cache: "no-store" }).catch(() => {}); // bridge: hide the live view on the PC
 }
 function enfocarPuente(){
@@ -1261,6 +1284,21 @@ async function sesionFotosNikon(){
     for (let i = 1; i <= 3; i++){
       $("leyenda").textContent = T().fotoDe(i);
       mostrarPose(i - 1);
+      if (modoRapido && i > 1){
+        // Rapid fire: no countdown — one focus, a short beat for
+        // the AF to settle, then straight to the shutter. The
+        // screen flash still waits for the bridge's confirmation,
+        // and the next pose silhouette is already up.
+        $("leyenda").textContent = T().otraFoto;
+        enfocarPuente();
+        await esperar(700);
+        const dr = await puente("/disparar").catch(() => null);
+        if (!dr || !dr.ok) throw new Error("disparo");
+        ocultarPose();
+        flashFuerte();
+        pintarPuntos(i);
+        continue;
+      }
       enfocarPuente(); // AF starts with the countdown...
       const repite = setTimeout(enfocarPuente, 2500); // ...and re-checks halfway
       let promDisparo = null;
