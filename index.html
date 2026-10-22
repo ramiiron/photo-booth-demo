@@ -184,6 +184,34 @@
                backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
                padding:8px 16px; font-family:inherit; font-size:13px; font-weight:700; }
   #rapido-chip.sel { background:var(--degradado); border-color:transparent; }
+  #voy-chip { position:fixed; top:114px; left:50%; transform:translateX(-50%); z-index:5;
+               background:rgba(18,14,24,.66); color:#fff; cursor:pointer;
+               border:1.5px solid rgba(255,255,255,.35); border-radius:999px;
+               backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+               padding:8px 16px; font-family:inherit; font-size:13px; font-weight:700; }
+  #voy-chip.sel { background:var(--degradado); border-color:transparent; }
+  #btn-operador { position:absolute; right:16px; bottom:16px; z-index:6;
+               background:transparent; border:none; cursor:pointer;
+               color:rgba(255,255,255,.75); font-family:inherit;
+               font-size:12.5px; font-weight:700; letter-spacing:.06em;
+               text-transform:uppercase; padding:10px 12px; }
+  #panel-operador { position:fixed; left:0; right:0; bottom:0; z-index:9;
+                   padding:18px 18px 30px; display:flex; justify-content:center; }
+  .panel-tarjeta { text-align:left; max-height:84vh; overflow-y:auto; }
+  .op-etq { display:block; color:rgba(255,255,255,.75); font-size:12.5px; font-weight:700;
+            letter-spacing:.05em; text-transform:uppercase; margin:16px 0 8px; }
+  .op-input { width:100%; box-sizing:border-box; background:rgba(255,255,255,.1);
+              border:1.5px solid rgba(255,255,255,.3); border-radius:14px;
+              color:#fff; font-family:inherit; font-size:16px; padding:12px 14px; }
+  .op-seg { display:flex; gap:10px; }
+  .op-seg button { flex:1; font-family:inherit; padding:12px; border-radius:14px;
+              border:1.5px solid rgba(255,255,255,.35); cursor:pointer;
+              background:rgba(255,255,255,.12); color:#fff;
+              font-size:16px; font-weight:800; }
+  .op-seg button.sel { background:var(--degradado); border-color:transparent; }
+  .op-acciones { margin-top:22px; }
+  .panel-tarjeta .op-cerrar { color:#fff; border-color:rgba(255,255,255,.55);
+                           background:transparent; width:100%; }
   #pose-pregunta { position:fixed; left:0; right:0; bottom:0; z-index:8;
                    padding:18px 18px 30px; display:flex; justify-content:center; }
   .pose-tarjeta { background:rgba(18,14,24,.85); border-radius:24px; padding:22px;
@@ -379,6 +407,7 @@
       <p class="inicio-evento oculto" id="inicio-evento"></p>
       <span class="btn-negro" id="btn-start" role="button" data-txt="empezar">Start →</span>
     </div>
+    <button id="btn-operador" data-txt="operador">Operator</button>
   </div>
 
   <div id="vista-camara" class="oculto">
@@ -405,6 +434,7 @@
   </div>
   <button id="pose-chip" class="oculto"></button>
   <button id="rapido-chip" class="oculto"></button>
+  <button id="voy-chip" class="oculto"></button>
   <!-- Asked once when the camera opens: guided poses or freestyle -->
   <div id="pose-pregunta" class="oculto">
     <div class="pose-tarjeta">
@@ -428,6 +458,31 @@
   </div>
 
   <div id="cuenta">5</div>
+  <!-- Operator panel: event, countdown and photos per session -->
+  <div id="panel-operador" class="oculto">
+    <div class="pose-tarjeta panel-tarjeta">
+      <p class="pose-tit" data-txt="ajustes">Operator settings</p>
+      <label class="op-etq" for="op-nombre" data-txt="nombreEvento">Event name</label>
+      <input id="op-nombre" class="op-input" type="text" autocomplete="off">
+      <label class="op-etq" for="op-id" data-txt="idEvento">Event ID (gallery tag)</label>
+      <input id="op-id" class="op-input" type="text" autocomplete="off" autocapitalize="none">
+      <label class="op-etq" data-txt="cuentaAtras">Countdown</label>
+      <div class="op-seg">
+        <button id="op-cuenta-3" type="button">3 s</button>
+        <button id="op-cuenta-5" type="button">5 s</button>
+      </div>
+      <label class="op-etq" data-txt="fotosSesion">Photos per session</label>
+      <div class="op-seg">
+        <button id="op-fotos-3" type="button">3</button>
+        <button id="op-fotos-4" type="button">4</button>
+      </div>
+      <div class="pose-btns op-acciones">
+        <button class="btn-negro" id="op-guardar" data-txt="guardar">Save</button>
+        <button class="btn-linea op-cerrar" id="op-cerrar" data-txt="cerrar">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div id="flash"></div>
 
   <div id="vista-qr" class="centro oculto">
@@ -479,6 +534,18 @@ const NEGOCIO = {
   nombre: "Pose & Post",  // e.g. "Flashbox Studio" ("" = no watermark)
 };
 
+// ===== Operator settings (panel on the start screen, saved here) =====
+// The operator can change the event name/tag, the countdown and the
+// photos per session without touching code; it persists per device.
+let fotosPorSesion = 3, segundosCuenta = 5;
+try {
+  const AJ = JSON.parse(localStorage.getItem("pb-ajustes") || "{}");
+  if (AJ.fotos === 3 || AJ.fotos === 4) fotosPorSesion = AJ.fotos;
+  if (AJ.cuenta === 3 || AJ.cuenta === 5) segundosCuenta = AJ.cuenta;
+  if (typeof AJ.nombre === "string") EVENTO.nombre = AJ.nombre;
+  if (typeof AJ.id === "string" && AJ.id) EVENTO.id = AJ.id;
+} catch(e){}
+
 // ===== Language: EN/ES toggle on the start screen, saved on this iPad =====
 let idioma = "en";
 try { if (localStorage.getItem("pb-idioma") === "es") idioma = "es"; } catch(e){}
@@ -502,7 +569,18 @@ const TXT = {
     poseNo: "No, freestyle",
     poseCuantos: "How many people?",
     poseChip: "Poses on",
-    fotoDe: i => `Photo ${i} of 3 — get ready`,
+    fotoDe: (i, n) => `Photo ${i} of ${n} — get ready`,
+    operador: "Operator",
+    ajustes: "Operator settings",
+    nombreEvento: "Event name",
+    idEvento: "Event ID (gallery tag)",
+    cuentaAtras: "Countdown",
+    fotosSesion: "Photos per session",
+    guardar: "Save",
+    cerrar: "Close",
+    voy: on => on ? "You're in! First photo +5 s" : "Join the photo (+5 s)",
+    tituloN: n => `Capture your moment<br><span class="degradado-texto">in ${n} photos</span>`,
+    subN: s => `${s}-second countdown · Strip ready to download`,
     mantenPose: "Hold your pose!",
     rapido: on => `Rapid photos · ${on ? "ON" : "OFF"}`,
     otraFoto: "Another one!",
@@ -510,7 +588,7 @@ const TXT = {
     mueve: "Move!",
     creandoBoom: "Creating your boomerang…",
     subiendo: "Uploading…",
-    subiendoFotos: i => `Uploading photos… ${i}/3`,
+    subiendoFotos: (i, n) => `Uploading photos… ${i}/${n}`,
     errorAlgo: "Something went wrong. Try again.",
     sinConexion: "Saved on this iPad — no connection. It will upload on its own.",
     errorCamara: "Couldn't access the camera. Check the permission in Settings.",
@@ -535,7 +613,18 @@ const TXT = {
     poseNo: "No, estilo libre",
     poseCuantos: "¿Cuántas personas son?",
     poseChip: "Poses activas",
-    fotoDe: i => `Foto ${i} de 3 — prepárate`,
+    fotoDe: (i, n) => `Foto ${i} de ${n} — prepárate`,
+    operador: "Operador",
+    ajustes: "Ajustes del operador",
+    nombreEvento: "Nombre del evento",
+    idEvento: "ID del evento (tag de galería)",
+    cuentaAtras: "Cuenta regresiva",
+    fotosSesion: "Fotos por sesión",
+    guardar: "Guardar",
+    cerrar: "Cerrar",
+    voy: on => on ? "¡Ya estás dentro! Primera foto +5 s" : "Entrar en la foto (+5 s)",
+    tituloN: n => `Captura tu momento<br><span class="degradado-texto">en ${n} fotos</span>`,
+    subN: s => `Cuenta regresiva de ${s} segundos · Tira lista para descargar`,
     mantenPose: "¡Mantén la pose!",
     rapido: on => `Fotos rápidas · ${on ? "ON" : "OFF"}`,
     otraFoto: "¡Otra más!",
@@ -543,7 +632,7 @@ const TXT = {
     mueve: "¡Muévete!",
     creandoBoom: "Creando tu boomerang…",
     subiendo: "Subiendo…",
-    subiendoFotos: i => `Subiendo fotos… ${i}/3`,
+    subiendoFotos: (i, n) => `Subiendo fotos… ${i}/${n}`,
     errorAlgo: "Algo salió mal. Intenta de nuevo.",
     sinConexion: "Guardado en este iPad — sin conexión. Se subirá solo.",
     errorCamara: "No se pudo acceder a la cámara. Revisa el permiso en Ajustes.",
@@ -563,6 +652,7 @@ function aplicarIdioma(){
   $("leyenda").textContent = (typeof modoActual !== "undefined" && modoActual === "boomerang") ? T().muevete : T().sonrie;
   pintarDisenos();
   actualizarPendientes();
+  pintarTextosInicio();
 }
 
 // Gallery URL with the event config (name, template, business, language, logo)
@@ -620,8 +710,10 @@ function mostrar(id){
   }
 }
 function pintarPuntos(n){
-  [...$("puntos").children].forEach((s,i) => s.classList.toggle("ok", i < n));
-  $("contador").textContent = n + "/3";
+  const cont = $("puntos");
+  if (cont.children.length !== fotosPorSesion) cont.innerHTML = "<span></span>".repeat(fotosPorSesion);
+  [...cont.children].forEach((s,i) => s.classList.toggle("ok", i < n));
+  $("contador").textContent = n + "/" + fotosPorSesion;
 }
 
 // Design picker: apply the design saved on this iPad (if any). With a
@@ -958,7 +1050,7 @@ async function subirYMostrarQR(fotos){
   try {
     const urls = [];
     for (let i = 0; i < fotos.length; i++){
-      $("leyenda").textContent = T().subiendoFotos(i + 1);
+      $("leyenda").textContent = T().subiendoFotos(i + 1, fotos.length);
       const blob = await (await fetch(fotos[i])).blob();
       urls.push(await subirFoto(blob, i));
     }
@@ -1024,7 +1116,7 @@ function elegirPoses(n){
     const j = Math.floor(Math.random() * (i + 1));
     [set[i], set[j]] = [set[j], set[i]];
   }
-  poseSesion = { n, lista: set.slice(0, 3) };
+  poseSesion = { n, lista: set.slice(0, fotosPorSesion) };
   $("pose-chip").textContent = T().poseChip + " · " + (n === 4 ? "4+" : n);
   $("pose-chip").classList.remove("oculto");
   aplicarEncuadre(encuadrePara(n)); // frame tighter for small groups
@@ -1032,12 +1124,13 @@ function elegirPoses(n){
   // while poses are on. Detection only serves freestyle framing.
 }
 function mostrarPreguntaPose(){
+  mostrarChipsCamara();
   if (modoActual !== "fotos" || poseSesion) return;
   $("pose-paso1").classList.remove("oculto");
   $("pose-paso2").classList.add("oculto");
   $("pose-pregunta").classList.remove("oculto");
 }
-function ocultarPreguntaPose(){ $("pose-pregunta").classList.add("oculto"); $("rapido-chip").classList.add("oculto"); }
+function ocultarPreguntaPose(){ $("pose-pregunta").classList.add("oculto"); $("rapido-chip").classList.add("oculto"); $("voy-chip").classList.add("oculto"); }
 function mostrarPose(i){
   if (!poseSesion) return;
   const p = poseSesion.lista[i];
@@ -1082,6 +1175,64 @@ function pintarChipRapido(){
   chip.classList.toggle("sel", modoRapido);
 }
 $("rapido-chip").onclick = () => { modoRapido = !modoRapido; pintarChipRapido(); };
+
+// "Join the photo": one-shot +5 s on the next session's first photo,
+// so the host can run into the frame. Lives on the camera view.
+let voyYo = false;
+function pintarChipVoy(){
+  const chip = $("voy-chip");
+  chip.textContent = T().voy(voyYo);
+  chip.classList.toggle("sel", voyYo);
+}
+$("voy-chip").onclick = () => { voyYo = !voyYo; pintarChipVoy(); };
+function mostrarChipsCamara(){
+  if (modoActual !== "fotos") return;
+  pintarChipVoy();
+  $("voy-chip").classList.remove("oculto");
+  if (MODO_NIKON){ pintarChipRapido(); $("rapido-chip").classList.remove("oculto"); }
+}
+
+// ===== Operator panel (start screen) =====
+let opCuenta = 5, opFotos = 3; // panel temp state while it is open
+function pintarSegOp(){
+  $("op-cuenta-3").classList.toggle("sel", opCuenta === 3);
+  $("op-cuenta-5").classList.toggle("sel", opCuenta === 5);
+  $("op-fotos-3").classList.toggle("sel", opFotos === 3);
+  $("op-fotos-4").classList.toggle("sel", opFotos === 4);
+}
+$("op-cuenta-3").onclick = () => { opCuenta = 3; pintarSegOp(); };
+$("op-cuenta-5").onclick = () => { opCuenta = 5; pintarSegOp(); };
+$("op-fotos-3").onclick = () => { opFotos = 3; pintarSegOp(); };
+$("op-fotos-4").onclick = () => { opFotos = 4; pintarSegOp(); };
+$("btn-operador").onclick = (e) => {
+  e.stopPropagation();
+  $("op-nombre").value = EVENTO.nombre;
+  $("op-id").value = EVENTO.id;
+  opCuenta = segundosCuenta; opFotos = fotosPorSesion;
+  pintarSegOp();
+  $("panel-operador").classList.remove("oculto");
+};
+$("op-cerrar").onclick = () => $("panel-operador").classList.add("oculto");
+$("op-guardar").onclick = () => {
+  const id = $("op-id").value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/^-+|-+$/g, "");
+  EVENTO.nombre = $("op-nombre").value.trim();
+  if (id) EVENTO.id = id;
+  segundosCuenta = opCuenta;
+  fotosPorSesion = opFotos;
+  try { localStorage.setItem("pb-ajustes", JSON.stringify({ nombre: EVENTO.nombre, id: EVENTO.id, cuenta: segundosCuenta, fotos: fotosPorSesion })); } catch(e){}
+  aplicarNombre();
+  pintarTextosInicio();
+  pintarPuntos(0);
+  $("panel-operador").classList.add("oculto");
+};
+function pintarTextosInicio(){
+  // The landing copy names the photo count and the countdown length:
+  // keep it honest with the operator settings.
+  const tit = document.querySelectorAll('[data-txt="titulo"]')[0];
+  const sub = document.querySelectorAll('[data-txt="sub"]')[0];
+  if (tit) tit.innerHTML = T().tituloN(fotosPorSesion);
+  if (sub) sub.textContent = T().subN(segundosCuenta);
+}
 
 /* ===== Face detection: freestyle framing only =====
    The pose silhouette is FIXED (waist-up, sized by the people count),
@@ -1232,8 +1383,6 @@ function feedStop(){
 }
 async function nikonIniciarSesion(){
   await puente("/sesion"); // bridge: show the live view on the PC + reset the session
-  pintarChipRapido();
-  $("rapido-chip").classList.remove("oculto"); // the rapid-fire toggle lives on the camera view
   feedStart();
 }
 function nikonCerrarSesion(){
@@ -1244,14 +1393,14 @@ function nikonCerrarSesion(){
 function enfocarPuente(){
   fetch("/enfocar", { cache: "no-store" }).catch(() => {});
 }
-async function cuentaNikon(alUltimo){
+async function cuentaNikon(segundos, alUltimo){
   // The Nikon's shutter has a pipeline (WiFi + digiCamControl + the
   // camera stepping out of live view), so the capture command fires
   // at the START of the last second: the exposure lands on zero,
   // while everyone is still posing, instead of seconds after it.
   const cuenta = $("cuenta");
   cuenta.style.display = "flex";
-  for (let n = 5; n >= 1; n--){
+  for (let n = segundos; n >= 1; n--){
     cuenta.textContent = n;
     if (n === 1 && alUltimo) alUltimo();
     await esperar(1000);
@@ -1261,8 +1410,8 @@ async function cuentaNikon(alUltimo){
 async function sesionFotosNikon(){
   ocultarPreguntaPose(); // shooting starts: the question card goes away
   try {
-    for (let i = 1; i <= 3; i++){
-      $("leyenda").textContent = T().fotoDe(i);
+    for (let i = 1; i <= fotosPorSesion; i++){
+      $("leyenda").textContent = T().fotoDe(i, fotosPorSesion);
       mostrarPose(i - 1);
       if (modoRapido && i > 1){
         // Rapid fire: no countdown — one focus, a short beat for
@@ -1280,9 +1429,11 @@ async function sesionFotosNikon(){
         continue;
       }
       enfocarPuente(); // AF starts with the countdown...
-      const repite = setTimeout(enfocarPuente, 2500); // ...and re-checks halfway
+      const total = segundosCuenta + (i === 1 && voyYo ? 5 : 0); // the "+5 s to jump in" applies to the first photo only
+      const repite = setTimeout(enfocarPuente, Math.round(total * 550)); // ...and re-checks halfway
       let promDisparo = null;
-      await cuentaNikon(() => { promDisparo = puente("/disparar").catch(() => null); });
+      await cuentaNikon(total, () => { promDisparo = puente("/disparar").catch(() => null); });
+      if (i === 1) voyYo = false; // one-shot: consumed
       clearTimeout(repite);
       // The count is over but the shutter may still be landing: the
       // guests HOLD the pose (the silhouette stays up) until the
@@ -1306,10 +1457,10 @@ async function galeriaFinalNikon(){
   const limite = Date.now() + 90000;
   let fotos = [];
   while (Date.now() < limite){
-    const d = await puente("/galeria-final?n=3").catch(() => null);
+    const d = await puente("/galeria-final?n=" + fotosPorSesion).catch(() => null);
     if (d && d.fotos){
       fotos = d.fotos;
-      if (fotos.length) $("leyenda").textContent = T().subiendoFotos(Math.min(fotos.length, 3));
+      if (fotos.length) $("leyenda").textContent = T().subiendoFotos(Math.min(fotos.length, fotosPorSesion), fotosPorSesion);
       if (d.listo) break;
     }
     await esperar(1500);
@@ -1326,10 +1477,11 @@ async function sesionFotos(){
   if (MODO_NIKON) return sesionFotosNikon();
   ocultarPreguntaPose(); // shooting starts: the question card goes away
   const fotos = [];
-  for (let i = 1; i <= 3; i++){
-    $("leyenda").textContent = T().fotoDe(i);
+  for (let i = 1; i <= fotosPorSesion; i++){
+    $("leyenda").textContent = T().fotoDe(i, fotosPorSesion);
     mostrarPose(i - 1);
-    await cuentaRegresiva(5);
+    await cuentaRegresiva(i === 1 && voyYo ? segundosCuenta + 5 : segundosCuenta);
+    if (i === 1) voyYo = false; // one-shot: consumed
     ocultarPose();
     fotos.push(await capturar());
     pintarPuntos(i);
