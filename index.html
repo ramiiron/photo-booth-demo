@@ -167,8 +167,7 @@
                padding:70px 12px 6px; }
   #pose-img { height:min(84vh, 100%); max-width:96%; object-fit:contain; opacity:.5;
               transform:scaleX(-1); /* mirrored, like the preview */
-              filter:drop-shadow(0 6px 24px rgba(0,0,0,.45));
-              transition:height .35s ease, top .35s ease, left .35s ease; }
+              filter:drop-shadow(0 6px 24px rgba(0,0,0,.45)); }
   #pose-nombre { position:absolute; top:64px; left:50%; transform:translateX(-50%);
                  background:var(--degradado); color:#fff; font-weight:800; white-space:nowrap;
                  font-size:17px; padding:10px 22px; border-radius:999px; text-align:center;
@@ -1115,6 +1114,9 @@ const POSES = [
   { id:"formal",    n:4, en:"Formal portrait",         es:"¡Retrato formal!" },
   { id:"highfive4", n:4, en:"All hands in!",           es:"¡Todos a chocar!" },
 ];
+// Preload the silhouettes: the fixed placement math needs each PNG's
+// real aspect BEFORE it is first shown, or it resizes when it loads.
+POSES.forEach(p => { const im = new Image(); im.src = "./poses/" + p.id + ".png"; });
 let poseSesion = null; // { n, lista:[pose x3] } while guided poses are on
 
 function elegirPoses(n){
@@ -1344,10 +1346,11 @@ function aplicarAjustePose(){
   const img = $("pose-img");
   if (!poseSesion) return;
   if ($("pose-capa").classList.contains("oculto")) return;
+  if (!img.naturalWidth || !img.naturalHeight) return; // not loaded yet: the onload in mostrarPose re-runs this with the real aspect
   const W = window.innerWidth, H = window.innerHeight;
   const ALTOS = { 1: 1.52, 2: 1.42, 3: 1.30, 4: 1.20 }; // pictogram height × screen height
   let h = H * (ALTOS[poseSesion.n] || 1.35);
-  const aspect = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 0.7;
+  const aspect = img.naturalWidth / img.naturalHeight;
   let w = h * aspect;
   if (aspect < 1.1 && w > W * 1.04){ w = W * 1.04; h = w / aspect; } // solos/duos stay in frame; wide groups may bleed at the sides, like a real group photo
   img.style.position = "absolute";
