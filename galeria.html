@@ -378,21 +378,20 @@ if (!fotos.length && !videoUrl){
 // Booking CTA: only shown when the gallery actually has content
 if (fotos.length || videoUrl) $("cta-reserva").classList.remove("oculto");
 
-// Business watermark: small © name at the bottom-right of the canvas.
-// White text with a dark outline so it reads on any background.
+// Business watermark: discreet © name at the bottom-right of the canvas.
+// Semi-transparent white with a soft shadow: a signature, not a billboard.
 function dibujarMarca(x, W, H, tam){
   if (!negocio) return;
   const texto = "© " + negocio;
-  const px = W - tam, py = H - Math.round(tam * 0.7);
+  const px = W - tam, py = H - Math.round(tam * 0.55);
   x.save();
-  x.font = "800 " + tam + "px Montserrat, Arial, sans-serif";
+  x.font = "600 " + tam + "px Montserrat, Arial, sans-serif";
   x.textAlign = "right";
   x.textBaseline = "bottom";
-  x.lineJoin = "round";
-  x.lineWidth = Math.max(2, Math.round(tam * 0.22));
-  x.strokeStyle = "rgba(0,0,0,.8)";
-  x.strokeText(texto, px, py);
-  x.fillStyle = "#fff";
+  x.shadowColor = "rgba(0,0,0,.5)";
+  x.shadowBlur = Math.max(2, Math.round(tam * 0.22));
+  x.shadowOffsetY = 1;
+  x.fillStyle = "rgba(255,255,255,.72)";
   x.fillText(texto, px, py);
   x.restore();
 }
@@ -407,7 +406,7 @@ async function fotoConMarca(url){
   x.filter = FILTROS[filtroActual];
   x.drawImage(img, 0, 0);
   x.filter = "none"; // the watermark is drawn unfiltered
-  dibujarMarca(x, c.width, c.height, Math.max(22, Math.round(c.width * 0.032)));
+  dibujarMarca(x, c.width, c.height, Math.max(15, Math.round(c.width * 0.016)));
   return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error("blob")), "image/jpeg", 0.92));
 }
 
@@ -531,7 +530,7 @@ async function descargarTira(){
       x.fillText(pieTxt, W / 2, H - pad - pieH / 2);
     }
 
-    dibujarMarca(x, W, H, 20);
+    dibujarMarca(x, W, H, 13);
 
     const blob = await new Promise(r => c.toBlob(r, "image/png"));
     const file = new File([blob], "tira-photo-booth.png", { type: "image/png" });
