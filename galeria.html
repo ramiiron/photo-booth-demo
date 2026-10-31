@@ -68,6 +68,15 @@
   .tira.pastel { background:linear-gradient(170deg,#ffd6e8,#d9c8ff); color:#fff; }
   .tira.noir { background:#0b0b0d; color:#7dff9a; }
   .tira.noir .rec { color:#ff3b3b; }
+  .mini.halloween { background:linear-gradient(180deg,#12060d 55%,#f2762e); border:1px solid #3a2b16; }
+  /* Halloween frame: the booth's own scene photo, darkened, gold type —
+     the same look as the app's Halloween start screen */
+  .tira.halloween { background:#0a0a10 url("./halloween-escena.jpg") center/cover no-repeat; color:#f6c453; }
+  .tira.halloween::before { content:""; position:absolute; inset:0; border-radius:18px;
+                            background:rgba(5,5,12,.58); }
+  .tira.halloween > * { position:relative; z-index:1; }
+  .tira.halloween .tira-cabeza { font-family:'Cinzel Decorative', Georgia, serif; letter-spacing:.06em; }
+  .tira.halloween .tira-pie { font-family:'Cinzel Decorative', Georgia, serif; letter-spacing:.1em; }
 
   /* Individuals */
   .foto { margin-bottom:40px; }
@@ -147,6 +156,7 @@
         <button class="marco" data-marco="clasico"><span class="mini clasico"></span>Classic</button>
         <button class="marco" data-marco="pastel"><span class="mini pastel"></span>Pastel</button>
         <button class="marco" data-marco="noir"><span class="mini noir"></span>Noir</button>
+        <button class="marco" data-marco="halloween"><span class="mini halloween"></span>Halloween</button>
       </div>
       <div class="tira retro" id="tira">
         <div class="tira-cabeza"><span id="tira-cabeza-izq">PHOTO BOOTH</span><span id="tira-cabeza-der">RETRO · 2026</span></div>
@@ -265,9 +275,11 @@ const MARCOS = {
   retro:   { cabeza:["PHOTO BOOTH","RETRO · 2026"], pie:(LANG === "es" ? "✦ RECUERDOS ✦" : "✦ MEMORIES ✦"), fondo:"#f5eedd", tinta:"#2b2118", fuente:800 },
   clasico: { cabeza:["FLASHBOX SEOUL","CLASSIC MINIMAL"], pie:"", fondo:"#ffffff", tinta:"#9a9a9a", fuente:800 },
   pastel:  { cabeza:["PASTEL DREAM",""], pie:"cutie", fondo:null, degradado:["#ffd6e8","#d9c8ff"], tinta:"#ffffff", fuente:800 },
-  noir:    { cabeza:["[RAW_03]",'<span class="rec">● REC</span>'], pie:"CYBER NOIR", fondo:"#0b0b0d", tinta:"#7dff9a", fuente:800, rec:"#ff3b3b" }
+  noir:    { cabeza:["[RAW_03]",'<span class="rec">● REC</span>'], pie:"CYBER NOIR", fondo:"#0b0b0d", tinta:"#7dff9a", fuente:800, rec:"#ff3b3b" },
+  halloween: { cabeza:["POSE & POST","🎃 HALLOWEEN 🎃"], pie:(LANG === "es" ? "🎃 RECUERDOS DE TERROR 🎃" : "🎃 SPOOKY MEMORIES 🎃"), fondo:"#0a0a10", tinta:"#f6c453", fuente:700, escena:"./halloween-escena.jpg", display:"'Cinzel Decorative', Georgia, serif" }
 };
-let marcoActual = "retro";
+// Halloween galleries open on the Halloween frame; the rest keep Retro
+let marcoActual = (tpl === "halloween" && MARCOS.halloween) ? "halloween" : "retro";
 
 // Filters: applied here in the gallery, after scanning the QR
 // (live preview + baked into the strip PNG and shared photos)
@@ -411,6 +423,10 @@ if (!fotos.length && !videoUrl){
   });
 
   $("descargar-tira").onclick = descargarTira;
+
+  // Apply the default frame to the preview (Halloween on Halloween events)
+  if (marcoActual !== "retro")
+    document.querySelector('[data-marco="' + marcoActual + '"]').click();
 }
 
 // Booking CTA: only shown when the gallery actually has content
@@ -522,15 +538,22 @@ async function descargarTira(){
     c.width = W; c.height = H;
     const x = c.getContext("2d");
 
-    // Background
-    if (M.degradado){
+    // Background (a frame may carry its own scene photo, darkened)
+    let escImg = null;
+    if (M.escena){ try { escImg = await cargar(M.escena); } catch(e){} }
+    if (escImg){
+      dibujarCover(x, escImg, 0, 0, W, H);
+      x.fillStyle = "rgba(5,5,12,.58)";
+      x.fillRect(0, 0, W, H);
+    } else if (M.degradado){
       const g = x.createLinearGradient(0, 0, W * 0.3, H);
       g.addColorStop(0, M.degradado[0]); g.addColorStop(1, M.degradado[1]);
       x.fillStyle = g;
+      x.fillRect(0, 0, W, H);
     } else {
       x.fillStyle = M.fondo;
+      x.fillRect(0, 0, W, H);
     }
-    x.fillRect(0, 0, W, H);
 
     // Client logo under the header
     if (logoImg) dibujarContain(x, logoImg, pad, pad + cabezaH + 4, fw, logoH - 8);
@@ -556,9 +579,10 @@ async function descargarTira(){
     x.fillStyle = M.tinta;
     x.textAlign = "center";
     x.textBaseline = "middle";
-    x.font = "800 24px Montserrat, Arial, sans-serif";
+    const fam = M.display || "Montserrat, Arial, sans-serif";
+    x.font = M.fuente + " " + (M.display ? 21 : 24) + "px " + fam;
     x.fillText(M.cabeza[0], W / 2, pad + cabezaH / 2 - 12);
-    x.font = "700 20px Montserrat, Arial, sans-serif";
+    x.font = "700 " + (M.display ? 15 : 20) + "px " + fam;
     if (marcoActual === "noir"){
       x.fillStyle = M.rec;
       x.fillText("● REC", W / 2, pad + cabezaH / 2 + 16);
@@ -568,7 +592,7 @@ async function descargarTira(){
     }
     const pieTxt = evNombre || M.pie;
     if (pieTxt){
-      x.font = "800 26px Montserrat, Arial, sans-serif";
+      x.font = "800 " + (M.display ? 20 : 26) + "px " + fam;
       x.fillStyle = M.tinta;
       x.fillText(pieTxt, W / 2, H - pad - pieH / 2);
     }
