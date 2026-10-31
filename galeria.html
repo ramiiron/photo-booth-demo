@@ -310,6 +310,44 @@ function fijarFiltro(nombre){
 }
 document.querySelectorAll(".filtro-g").forEach(b => { b.onclick = () => fijarFiltro(b.dataset.filtro); });
 
+// Pixel filters (Safari-safe): ctx.filter is silently ignored by older
+// WebKit, so downloads came out unfiltered while the preview (CSS) looked
+// right. These matrices reproduce the CSS filter strings per pixel.
+function matrizSaturacion(s){
+  return [0.213+0.787*s, 0.715-0.715*s, 0.072-0.072*s,
+          0.213-0.213*s, 0.715+0.285*s, 0.072-0.072*s,
+          0.213-0.213*s, 0.715-0.715*s, 0.072+0.928*s];
+}
+function matrizSepia(k){
+  const P = [0.393,0.769,0.189, 0.349,0.686,0.168, 0.272,0.534,0.131];
+  return P.map((v, i) => (i % 4 === 0 ? (1 - k) : 0) + v * k);
+}
+function multiplicarMatriz(A, B){ // result applies B first, then A
+  const M = new Array(9);
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++)
+    M[r*3+c] = A[r*3]*B[c] + A[r*3+1]*B[3+c] + A[r*3+2]*B[6+c];
+  return M;
+}
+const FILTROS_PX = {
+  bn:      { m: matrizSaturacion(0), contraste: 1.08 },
+  sepia:   { m: matrizSepia(0.85), contraste: 1 },
+  vintage: { m: multiplicarMatriz(matrizSaturacion(1.5), matrizSepia(0.35)), contraste: 1.05 },
+  vivido:  { m: matrizSaturacion(1.7), contraste: 1.12 },
+};
+function aplicarFiltroPixeles(x, rx, ry, rw, rh){
+  const f = FILTROS_PX[filtroActual];
+  if (!f) return;
+  const datos = x.getImageData(rx, ry, rw, rh);
+  const d = datos.data, m = f.m, c = f.contraste;
+  for (let i = 0; i < d.length; i += 4){
+    const r = d[i], g = d[i+1], b = d[i+2];
+    d[i]   = ((m[0]*r + m[1]*g + m[2]*b) - 128) * c + 128;
+    d[i+1] = ((m[3]*r + m[4]*g + m[5]*b) - 128) * c + 128;
+    d[i+2] = ((m[6]*r + m[7]*g + m[8]*b) - 128) * c + 128;
+  }
+  x.putImageData(datos, rx, ry);
+}
+
 if (!fotos.length && !videoUrl){
   $("sub").innerHTML = G.vacio;
 } else if (videoUrl){
@@ -403,9 +441,8 @@ async function fotoConMarca(url){
   c.width = img.naturalWidth || img.width;
   c.height = img.naturalHeight || img.height;
   const x = c.getContext("2d");
-  x.filter = FILTROS[filtroActual];
   x.drawImage(img, 0, 0);
-  x.filter = "none"; // the watermark is drawn unfiltered
+  aplicarFiltroPixeles(x, 0, 0, c.width, c.height); // before the watermark, which stays unfiltered
   dibujarMarca(x, c.width, c.height, Math.max(15, Math.round(c.width * 0.016)));
   return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error("blob")), "image/jpeg", 0.92));
 }
@@ -502,10 +539,16 @@ async function descargarTira(){
     const imgs = await Promise.all(fotos.map(cargar));
     imgs.forEach((img, i) => {
       const dy = pad + cabezaH + logoH + i * (fh + gap);
+      // Filter each photo on its own canvas first: a per-pixel pass over
+      // the strip region would also recolor the frame's rounded corners.
+      const tmp = document.createElement("canvas");
+      tmp.width = fw; tmp.height = fh;
+      const tx = tmp.getContext("2d");
+      dibujarCover(tx, img, 0, 0, fw, fh);
+      aplicarFiltroPixeles(tx, 0, 0, fw, fh);
       x.save();
       clipRedondeado(x, pad, dy, fw, fh, 22);
-      x.filter = FILTROS[filtroActual];
-      dibujarCover(x, img, pad, dy, fw, fh);
+      x.drawImage(tmp, pad, dy);
       x.restore();
     });
 

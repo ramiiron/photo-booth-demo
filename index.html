@@ -100,6 +100,18 @@
   #obturador::after { content:""; position:absolute; inset:16px; border-radius:50%;
                       background:var(--degradado); }
   #obturador:active { transform:translateX(-50%) scale(.92); }
+  /* The shutter must explain itself: guests stood in front of it waiting
+     for an automatic start. It pulses, and a label says what to do. */
+  @keyframes pulsoObturador { 0% { box-shadow:0 0 0 6px rgba(244,63,142,.35), 0 0 0 0 rgba(255,255,255,.45), 0 8px 30px rgba(0,0,0,.45); }
+    70% { box-shadow:0 0 0 6px rgba(244,63,142,.35), 0 0 0 30px rgba(255,255,255,0), 0 8px 30px rgba(0,0,0,.45); }
+    100% { box-shadow:0 0 0 6px rgba(244,63,142,.35), 0 0 0 0 rgba(255,255,255,0), 0 8px 30px rgba(0,0,0,.45); } }
+  #obturador { animation:pulsoObturador 1.7s ease-out infinite; }
+  #toca-iniciar { position:fixed; bottom:152px; left:50%; transform:translateX(-50%); z-index:4;
+                  background:rgba(10,10,16,.72); color:#fff; border:1.5px solid rgba(255,255,255,.55);
+                  padding:9px 20px; border-radius:999px; font-size:19px; font-weight:800;
+                  letter-spacing:.02em; white-space:nowrap; pointer-events:none;
+                  text-shadow:0 1px 6px rgba(0,0,0,.5); animation:flotaPista 1.7s ease-in-out infinite; }
+  @keyframes flotaPista { 0%,100% { transform:translateX(-50%) translateY(0); } 50% { transform:translateX(-50%) translateY(-6px); } }
   .puntos { position:fixed; bottom:158px; left:0; right:0; z-index:4; }
   .puntos span { display:inline-block; width:9px; height:9px; border-radius:50%;
                  background:rgba(255,255,255,.35); margin:0 8px; transition:all .3s; }
@@ -423,6 +435,7 @@
       <button class="modo" data-modo="boomerang">Boomerang</button>
     </div>
     <button id="obturador" aria-label="Take photos"></button>
+    <div id="toca-iniciar" class="oculto" data-txt="tocaIniciar"></div>
     <div class="puntos" id="puntos"><span></span><span></span><span></span></div>
   </div>
 
@@ -568,6 +581,7 @@ const TXT = {
     qrSub: "Point your camera at the code<br>and take your photos",
     otra: "New session",
     sonrie: "Smile",
+    tocaIniciar: "Tap to start!",
     muevete: "Get ready to move",
     posePregunta: "Want a pose idea?",
     poseSi: "Yes, guide us!",
@@ -612,6 +626,7 @@ const TXT = {
     qrSub: "Apunta tu cámara al código<br>y llévate tus fotos",
     otra: "Nueva sesión",
     sonrie: "Sonríe",
+    tocaIniciar: "¡Toca para empezar!",
     muevete: "Prepárate para moverte",
     posePregunta: "¿Quieren una pose guiada?",
     poseSi: "¡Sí, guíanos!",
@@ -1139,8 +1154,29 @@ function mostrarPreguntaPose(){
   $("pose-paso1").classList.remove("oculto");
   $("pose-paso2").classList.add("oculto");
   $("pose-pregunta").classList.remove("oculto");
+  refrescarPista();
 }
-function ocultarPreguntaPose(){ $("pose-pregunta").classList.add("oculto"); $("rapido-chip").classList.add("oculto"); $("voy-chip").classList.add("oculto"); }
+function ocultarPreguntaPose(){ $("pose-pregunta").classList.add("oculto"); $("rapido-chip").classList.add("oculto"); $("voy-chip").classList.add("oculto"); refrescarPista(); }
+// "Tap to start!" hint: visible only while the camera view is up, the pose
+// card is down and the shutter is waiting (guests missed the button).
+function refrescarPista(){
+  const enCamara = !$("vista-camara").classList.contains("oculto");
+  const tarjeta = !$("pose-pregunta").classList.contains("oculto");
+  const libre = $("obturador").style.display !== "none";
+  $("toca-iniciar").classList.toggle("oculto", !(enCamara && !tarjeta && libre));
+}
+// Answering the pose card means "we are ready": start on its own after a
+// short beat (the first countdown IS the get-ready time). The shutter
+// stays as the manual alternative and for boomerang.
+let autoInicioTimer = null;
+function programarAutoInicio(){
+  clearTimeout(autoInicioTimer);
+  if (modoActual !== "fotos") return;
+  autoInicioTimer = setTimeout(() => {
+    if (!sesionActiva && !$("vista-camara").classList.contains("oculto") && $("obturador").style.display !== "none")
+      $("obturador").onclick();
+  }, 900);
+}
 function mostrarPose(i){
   if (!poseSesion) return;
   const p = poseSesion.lista[i];
@@ -1170,10 +1206,12 @@ $("pose-no").onclick = () => {
   ocultarPreguntaPose();
   cargarModeloCaras(); // freestyle framing counts faces instead
   iniciarDeteccion();
+  programarAutoInicio();
 };
 document.querySelectorAll(".pose-nums button").forEach(b => { b.onclick = () => {
   elegirPoses(parseInt(b.dataset.n, 10));
   ocultarPreguntaPose();
+  programarAutoInicio();
 }; });
 $("pose-chip").onclick = () => { reiniciarPoses(); mostrarPreguntaPose(); };
 
@@ -1585,7 +1623,9 @@ async function subirYMostrarQRBoomerang(blob){
 }
 
 $("obturador").onclick = async () => {
+  clearTimeout(autoInicioTimer);
   $("obturador").style.display = "none";
+  refrescarPista();
   sesionActiva = true;
   try {
     if (modoActual === "boomerang") await sesionBoomerang();
@@ -1597,6 +1637,7 @@ $("obturador").onclick = async () => {
   pintarPuntos(0);
   $("leyenda").textContent = modoActual === "boomerang" ? T().muevete : T().sonrie;
   $("obturador").style.display = "";
+  refrescarPista();
 };
 
 $("otra").onclick = () => { if (MODO_NIKON) nikonCerrarSesion(); reiniciarPoses(); mostrar("vista-inicio"); };
