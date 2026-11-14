@@ -60,6 +60,11 @@
      uncropped (no blur, no 1.07 zoom), with a blue veil for text contrast */
   body[data-tpl="paw"] .inicio-fondo { filter:brightness(.98) saturate(1.05); transform:none; }
   body[data-tpl="paw"] .inicio-velo { background:linear-gradient(180deg, rgba(8,30,66,.34), rgba(8,30,66,.10) 42%, rgba(8,30,66,.42)); }
+  /* Paw in landscape (Nikon mode runs the iPad sideways): wide artwork,
+     composed for 4:3 so nothing gets cropped */
+  @media (orientation: landscape) {
+    body[data-tpl="paw"] .inicio-fondo { background-image:url("./paw-fondo-wide.jpg"); }
+  }
   /* Button polish: friendly, elegant press feedback everywhere */
   #btn-home, #idiomas button, .modo { transition:transform .15s ease, background .2s ease, color .2s ease, box-shadow .2s ease; }
   #btn-home:active, #idiomas button:active, .modo:active { transform:scale(.94); }
