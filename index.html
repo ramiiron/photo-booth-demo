@@ -49,10 +49,12 @@
   body[data-tpl="baby-nina"] .inicio-fondo { background-image:url("./baby-nina.jpg"); }
   body[data-tpl="baby-nino"] .inicio-fondo { background-image:url("./baby-nino.jpg"); }
   body[data-tpl="baby-shower"] .inicio-fondo { background-image:url("./baby-neutral.jpg"); }
+  body[data-tpl="paw"] .inicio-fondo { background-image:url("./paw-fondo.jpg"); }
   body[data-tpl="boda"] .inicio-velo,
   body[data-tpl="baby-nina"] .inicio-velo,
   body[data-tpl="baby-nino"] .inicio-velo,
-  body[data-tpl="baby-shower"] .inicio-velo {
+  body[data-tpl="baby-shower"] .inicio-velo,
+  body[data-tpl="paw"] .inicio-velo {
     background:linear-gradient(180deg, rgba(43,32,38,.36), rgba(43,32,38,.10) 42%, rgba(43,32,38,.44)); }
   /* Button polish: friendly, elegant press feedback everywhere */
   #btn-home, #idiomas button, .modo { transition:transform .15s ease, background .2s ease, color .2s ease, box-shadow .2s ease; }
@@ -692,6 +694,7 @@ const DISENOS = [
   { id:"baby-nino",   en:"It's a Boy",  es:"Es Niño",     img:"./baby-nino.jpg" },
   { id:"baby-shower", en:"Baby Shower", es:"Baby Shower", img:"./baby-neutral.jpg" },
   { id:"cumpleanos",  en:"Birthday",    es:"Cumpleaños",  grad:"linear-gradient(120deg,#8b5cf6,#f59e0b)" },
+  { id:"paw",         en:"Paw Party",   es:"Fiesta Paw",  img:"./paw-fondo.jpg" },
   { id:"graduacion",  en:"Graduation",  es:"Graduación",  grad:"linear-gradient(120deg,#1e40af,#c9a227)" },
 ];
 function pintarDisenos(){
@@ -739,7 +742,7 @@ function pintarPuntos(n){
 
 // Design picker: apply the design saved on this iPad (if any). With a
 // saved design the app opens on that landing; without one, on the picker.
-const PLANTILLAS_OK = ["fiesta","boda","baby-shower","baby-nina","baby-nino","cumpleanos","halloween","graduacion"];
+const PLANTILLAS_OK = ["fiesta","boda","baby-shower","baby-nina","baby-nino","cumpleanos","halloween","graduacion","paw"];
 let tplGuardada = null;
 try { tplGuardada = localStorage.getItem("pb-plantilla"); } catch(e){}
 if (PLANTILLAS_OK.includes(tplGuardada)) EVENTO.plantilla = tplGuardada;
