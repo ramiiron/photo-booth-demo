@@ -1286,12 +1286,20 @@ $("op-guardar").onclick = () => {
   pintarPuntos(0);
   $("panel-operador").classList.add("oculto");
 };
+// Per-design landing titles (designs not listed keep the standard title)
+const TITULOS_TPL = {
+  paw: {
+    es: n => `¡Posa como un<br><span class="degradado-texto">cachorro! 🐾</span>`,
+    en: n => `Strike a<br><span class="degradado-texto">paw-some pose! 🐾</span>`
+  }
+};
 function pintarTextosInicio(){
   // The landing copy names the photo count and the countdown length:
   // keep it honest with the operator settings.
   const tit = document.querySelectorAll('[data-txt="titulo"]')[0];
   const sub = document.querySelectorAll('[data-txt="sub"]')[0];
-  if (tit) tit.innerHTML = T().tituloN(fotosPorSesion);
+  const tplTit = TITULOS_TPL[EVENTO.plantilla];
+  if (tit) tit.innerHTML = tplTit ? tplTit[idioma](fotosPorSesion) : T().tituloN(fotosPorSesion);
   if (sub) sub.textContent = T().subN(segundosCuenta);
 }
 
