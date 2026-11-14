@@ -56,6 +56,10 @@
   body[data-tpl="baby-shower"] .inicio-velo,
   body[data-tpl="paw"] .inicio-velo {
     background:linear-gradient(180deg, rgba(43,32,38,.36), rgba(43,32,38,.10) 42%, rgba(43,32,38,.44)); }
+  /* Paw scene is a designed graphic, not a photo: keep it crisp and
+     uncropped (no blur, no 1.07 zoom), with a blue veil for text contrast */
+  body[data-tpl="paw"] .inicio-fondo { filter:brightness(.98) saturate(1.05); transform:none; }
+  body[data-tpl="paw"] .inicio-velo { background:linear-gradient(180deg, rgba(8,30,66,.34), rgba(8,30,66,.10) 42%, rgba(8,30,66,.42)); }
   /* Button polish: friendly, elegant press feedback everywhere */
   #btn-home, #idiomas button, .modo { transition:transform .15s ease, background .2s ease, color .2s ease, box-shadow .2s ease; }
   #btn-home:active, #idiomas button:active, .modo:active { transform:scale(.94); }
