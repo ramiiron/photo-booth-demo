@@ -77,6 +77,12 @@
   .tira.halloween > * { position:relative; z-index:1; }
   .tira.halloween .tira-cabeza { font-family:'Cinzel Decorative', Georgia, serif; letter-spacing:.06em; }
   .tira.halloween .tira-pie { font-family:'Cinzel Decorative', Georgia, serif; letter-spacing:.1em; }
+  .mini.paw { background:linear-gradient(180deg,#104e9e 0 24%,#e22b2c 24% 76%,#104e9e 76%); border:1px solid #104e9e; }
+  /* Paw frame: strip-sized themed background (bands for header/footer) */
+  .tira.paw { background:#2e82dc url("./paw-tira-fondo.jpg") center/cover no-repeat; color:#fff; }
+  /* Paw galleries: sky-blue page, warm blobs off */
+  body[data-tpl="paw"] { background:linear-gradient(180deg,#a5dcf7,#57a8e8); }
+  body[data-tpl="paw"] .fondo-calido { display:none; }
 
   /* Individuals */
   .foto { margin-bottom:40px; }
@@ -157,6 +163,7 @@
         <button class="marco" data-marco="pastel"><span class="mini pastel"></span>Pastel</button>
         <button class="marco" data-marco="noir"><span class="mini noir"></span>Noir</button>
         <button class="marco" data-marco="halloween"><span class="mini halloween"></span>Halloween</button>
+        <button class="marco" data-marco="paw"><span class="mini paw"></span>Paw</button>
       </div>
       <div class="tira retro" id="tira">
         <div class="tira-cabeza"><span id="tira-cabeza-izq">PHOTO BOOTH</span><span id="tira-cabeza-der">RETRO · 2026</span></div>
@@ -247,6 +254,7 @@ const PLANTILLAS = {
   "cumpleanos":  { en: "Birthday",     es: "Cumpleaños" },
   "halloween":   { en: "Halloween",    es: "Halloween" },
   "graduacion":  { en: "Graduation",   es: "Graduación" },
+  "paw":         { en: "Paw Party",    es: "Fiesta Paw" },
 };
 const tpl = PLANTILLAS[qs.get("tpl")] ? qs.get("tpl") : "fiesta";
 document.body.dataset.tpl = tpl;
@@ -276,10 +284,11 @@ const MARCOS = {
   clasico: { cabeza:["FLASHBOX SEOUL","CLASSIC MINIMAL"], pie:"", fondo:"#ffffff", tinta:"#9a9a9a", fuente:800 },
   pastel:  { cabeza:["PASTEL DREAM",""], pie:"cutie", fondo:null, degradado:["#ffd6e8","#d9c8ff"], tinta:"#ffffff", fuente:800 },
   noir:    { cabeza:["[RAW_03]",'<span class="rec">● REC</span>'], pie:"CYBER NOIR", fondo:"#0b0b0d", tinta:"#7dff9a", fuente:800, rec:"#ff3b3b" },
-  halloween: { cabeza:["POSE & POST","🎃 HALLOWEEN 🎃"], pie:(LANG === "es" ? "🎃 RECUERDOS DE TERROR 🎃" : "🎃 SPOOKY MEMORIES 🎃"), fondo:"#0a0a10", tinta:"#f6c453", fuente:700, escena:"./halloween-escena.jpg", display:"'Cinzel Decorative', Georgia, serif" }
+  halloween: { cabeza:["POSE & POST","🎃 HALLOWEEN 🎃"], pie:(LANG === "es" ? "🎃 RECUERDOS DE TERROR 🎃" : "🎃 SPOOKY MEMORIES 🎃"), fondo:"#0a0a10", tinta:"#f6c453", fuente:700, escena:"./halloween-escena.jpg", display:"'Cinzel Decorative', Georgia, serif" },
+  paw: { cabeza:["POSE & POST","🐾 PAW PARTY 🐾"], pie:(LANG === "es" ? "🐾 RECUERDOS 🐾" : "🐾 PAW MEMORIES 🐾"), fondo:"#2e82dc", tinta:"#ffffff", fuente:800, escena:"./paw-tira-fondo.jpg", sinOscurecer:true }
 };
-// Halloween galleries open on the Halloween frame; the rest keep Retro
-let marcoActual = (tpl === "halloween" && MARCOS.halloween) ? "halloween" : "retro";
+// Themed galleries open on their own frame; the rest keep Retro
+let marcoActual = (tpl === "halloween" && MARCOS.halloween) ? "halloween" : (tpl === "paw" && MARCOS.paw) ? "paw" : "retro";
 
 // Filters: applied here in the gallery, after scanning the QR
 // (live preview + baked into the strip PNG and shared photos)
@@ -543,8 +552,10 @@ async function descargarTira(){
     if (M.escena){ try { escImg = await cargar(M.escena); } catch(e){} }
     if (escImg){
       dibujarCover(x, escImg, 0, 0, W, H);
-      x.fillStyle = "rgba(5,5,12,.58)";
-      x.fillRect(0, 0, W, H);
+      if (!M.sinOscurecer){
+        x.fillStyle = "rgba(5,5,12,.58)";
+        x.fillRect(0, 0, W, H);
+      }
     } else if (M.degradado){
       const g = x.createLinearGradient(0, 0, W * 0.3, H);
       g.addColorStop(0, M.degradado[0]); g.addColorStop(1, M.degradado[1]);
